@@ -275,6 +275,22 @@
   const recurring = [];
   let nextId = 1;
 
+  function saveData() {
+    localStorage.setItem('todo-app-todos', JSON.stringify(todos));
+    localStorage.setItem('todo-app-recurring', JSON.stringify(recurring));
+    localStorage.setItem('todo-app-nextId', String(nextId));
+  }
+
+  function loadData() {
+    try {
+      const savedTodos = JSON.parse(localStorage.getItem('todo-app-todos') || '{}');
+      Object.assign(todos, savedTodos);
+      const savedRecurring = JSON.parse(localStorage.getItem('todo-app-recurring') || '[]');
+      recurring.push(...savedRecurring);
+      nextId = parseInt(localStorage.getItem('todo-app-nextId') || '1', 10);
+    } catch(e) {}
+  }
+
   let currentYear, currentMonth, selectedDate;
   let calView = 'month';
 
@@ -558,9 +574,6 @@
   // Auto-select start date's weekday when start date changes and type is weekly
   document.getElementById('recurStart').addEventListener('change', function () {
     if (this.value) {
-      // auto end date (only if not set)
-      if (!document.getElementById('recurEnd').value)
-        document.getElementById('recurEnd').value = addOneYear(this.value);
       // auto select weekday
       if (document.getElementById('recurType').value === 'weekly') {
         const dow = parseKey(this.value).getDay();
@@ -622,6 +635,7 @@
     }
 
     recurring.push({ id: nextId++, text, type, startDate: start, endDate: end||null, weekDays, monthlyConfig, doneByDate: {} });
+    saveData();
     document.getElementById('recurText').value  = '';
     document.getElementById('recurStart').value = '';
     document.getElementById('recurEnd').value   = '';
@@ -636,6 +650,7 @@
   function deleteRecurring(id) {
     const idx = recurring.findIndex(r => r.id === id);
     if (idx !== -1) recurring.splice(idx, 1);
+    saveData();
     renderRecurringList();
     renderCalendar();
     renderTodos();
@@ -694,6 +709,7 @@
         checkbox.type = 'checkbox'; checkbox.checked = done;
         checkbox.addEventListener('change', () => {
           r.doneByDate[selectedDate] = checkbox.checked;
+          saveData();
           li.classList.toggle('done', checkbox.checked);
           renderCalendar();
         });
@@ -728,6 +744,7 @@
         checkbox.type = 'checkbox'; checkbox.checked = item.done;
         checkbox.addEventListener('change', () => {
           item.done = checkbox.checked;
+          saveData();
           li.classList.toggle('done', item.done);
           renderCalendar();
         });
@@ -735,7 +752,7 @@
         span.className = 'task-text'; span.textContent = item.text;
         const del = document.createElement('button');
         del.textContent = '削除'; del.className = 'delete-btn';
-        del.onclick = () => { items.splice(idx, 1); renderTodos(); renderCalendar(); };
+        del.onclick = () => { items.splice(idx, 1); saveData(); renderTodos(); renderCalendar(); };
         li.appendChild(checkbox); li.appendChild(span); li.appendChild(del);
         ul2.appendChild(li);
       });
@@ -752,6 +769,7 @@
     if (!text) return;
     if (!todos[selectedDate]) todos[selectedDate] = [];
     todos[selectedDate].push({ text, done: false });
+    saveData();
     todoInput.value = '';
     todoInput.focus();
     renderTodos();
@@ -759,13 +777,12 @@
   }
 
   // ── Init ──
+  loadData();
   const now    = new Date();
   currentYear  = now.getFullYear();
   currentMonth = now.getMonth();
   selectedDate = toKey(currentYear, currentMonth, now.getDate());
-  const todayStr = selectedDate;
-  document.getElementById('recurStart').value = todayStr;
-  document.getElementById('recurEnd').value   = addOneYear(todayStr);
+  document.getElementById('recurStart').value = selectedDate;
 
   renderRecurringList();
   renderCalendar();
