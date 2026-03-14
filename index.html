@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+      min-height: 100vh;
+    }
+    .wrapper {
+      display: flex;
+      gap: 24px;
+      width: 100%;
+      max-width: 1000px;
+      align-items: flex-start;
+    }
+    .left-col { display: flex; flex-direction: column; gap: 20px; min-width: 310px; }
+
+    /* ── Card ── */
+    .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; }
+    .card h2 { font-size: 1rem; color: #333; margin-bottom: 14px; }
+
+    /* ── Calendar header ── */
+    .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 6px; }
+    .cal-header h2 { margin: 0; flex: 1; text-align: center; font-size: 1rem; }
+    .cal-nav { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #4a90e2; padding: 2px 8px; border-radius: 4px; }
+    .cal-nav:hover { background: #e8f0fe; }
+    .view-toggle { font-size: 0.72rem; padding: 3px 8px; background: #f0f2f5; color: #555; border: 1px solid #ddd; border-radius: 12px; cursor: pointer; white-space: nowrap; }
+    .view-toggle:hover { background: #e8f0fe; color: #4a90e2; border-color: #4a90e2; }
+
+    /* ── Pie (monthly summary) ── */
+    .pie-row { display: flex; align-items: center; gap: 14px; padding: 10px 4px 14px; border-bottom: 1px solid #f0f0f0; margin-bottom: 12px; }
+    .pie-svg { flex-shrink: 0; }
+    .pie-info { display: flex; flex-direction: column; }
+    .pie-pct  { font-size: 1.5rem; font-weight: bold; color: #333; line-height: 1; }
+    .pie-sub  { font-size: 0.75rem; color: #999; margin-top: 3px; }
+    .pie-detail { font-size: 0.75rem; color: #aaa; margin-top: 2px; }
+
+    /* ── Monthly calendar grid ── */
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .cal-day-label { text-align: center; font-size: 0.72rem; color: #888; padding: 4px 0; }
+    .cal-day {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 5px 2px 4px; border-radius: 4px; cursor: pointer;
+      font-size: 0.82rem; color: #333; border: 2px solid transparent; min-height: 58px;
+    }
+    .cal-day:hover:not(.empty) { background: #e8f0fe; }
+    .cal-day.today > .day-num { font-weight: bold; color: #4a90e2; }
+    .cal-day.selected { border-color: #4a90e2; background: #e8f0fe; }
+    .cal-day.empty { cursor: default; }
+    .day-num { line-height: 1.4; }
+    .day-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; margin-top: 2px; }
+    .day-stat-pct { font-size: 0.6rem; line-height: 1; }
+
+    /* ── Year view ── */
+    .year-summary { display: flex; align-items: center; gap: 14px; padding: 8px 4px 12px; border-bottom: 1px solid #f0f0f0; margin-bottom: 12px; }
+    .year-month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .month-card {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 10px 4px 8px; border-radius: 6px; cursor: pointer;
+      border: 2px solid transparent; background: #fafafa; transition: background 0.15s;
+    }
+    .month-card:hover { background: #e8f0fe; border-color: #b3d0f5; }
+    .month-card.current-month { border-color: #4a90e2; }
+    .month-card-title  { font-size: 0.8rem; font-weight: bold; color: #444; }
+    .month-card-pct    { font-size: 0.95rem; font-weight: bold; line-height: 1; }
+    .month-card-detail { font-size: 0.65rem; color: #aaa; }
+
+    /* ── Recurring Task Form ── */
+    .form-grid { display: grid; gap: 8px; }
+    .form-row { display: flex; gap: 8px; align-items: flex-start; }
+    .form-row label.row-label { font-size: 0.8rem; color: #666; min-width: 52px; padding-top: 6px; }
+    .form-row input[type="date"], .form-row select, .form-row input[type="number"] {
+      padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem;
+    }
+    .form-row input[type="date"], .form-row select { flex: 1; }
+    .optional-hint { font-size: 0.72rem; color: #bbb; }
+    .btn-add-recur { width: 100%; margin-top: 4px; padding: 8px; font-size: 0.9rem; }
+
+    /* ── Weekday picker ── */
+    .weekday-picker { display: flex; gap: 4px; flex-wrap: wrap; }
+    .wd-btn {
+      width: 30px; height: 30px; padding: 0;
+      background: #f0f2f5; color: #555;
+      border: 1px solid #ddd; border-radius: 50%;
+      font-size: 0.75rem; cursor: pointer; line-height: 1;
+    }
+    .wd-btn:hover { background: #e8f0fe; }
+    .wd-btn.active { background: #4a90e2; color: white; border-color: #4a90e2; }
+    .wd-btn.active:hover { background: #357abd; }
+
+    /* ── Monthly options ── */
+    .monthly-type-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .radio-row { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; color: #555; cursor: pointer; flex-wrap: wrap; }
+    .radio-row input[type="radio"] { cursor: pointer; margin: 0; }
+    .radio-row input[type="number"] { width: 48px; }
+    .radio-row select { padding: 3px 5px; }
+
+    /* ── Recurring Task List ── */
+    .recur-list { list-style: none; margin-top: 12px; }
+    .recur-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+    .recur-item:last-child { border-bottom: none; }
+    .recur-item .ri-text { flex: 1; color: #333; }
+    .recur-item .ri-meta { font-size: 0.75rem; color: #999; }
+    .badge { padding: 2px 7px; border-radius: 10px; font-size: 0.72rem; font-weight: bold; white-space: nowrap; }
+    .badge.daily   { background: #fff3e0; color: #e67e22; }
+    .badge.weekly  { background: #e8f5e9; color: #27ae60; }
+    .badge.monthly { background: #f3e5f5; color: #8e44ad; }
+
+    /* ── Todo Panel ── */
+    .todo-panel { flex: 1; }
+    .todo-panel h1 { font-size: 1.2rem; margin-bottom: 4px; color: #333; }
+    .selected-date-label { font-size: 0.85rem; color: #888; margin-bottom: 14px; }
+    .input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    input[type="text"] { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+    button { padding: 8px 16px; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+    button:hover { background: #357abd; }
+    .section-label { font-size: 0.75rem; font-weight: bold; color: #aaa; text-transform: uppercase; letter-spacing: .05em; margin: 14px 0 6px; }
+    ul.task-list { list-style: none; }
+    li.task-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0f0f0; }
+    li.task-item:last-child { border-bottom: none; }
+    li.task-item.done .task-text { text-decoration: line-through; color: #bbb; }
+    .task-text { flex: 1; font-size: 0.95rem; }
+    .delete-btn { background: #e25555; padding: 3px 9px; font-size: 0.78rem; }
+    .delete-btn:hover { background: #c0392b; }
+    .empty-msg { color: #ccc; font-size: 0.88rem; text-align: center; padding: 16px 0; }
+
+    @media (max-width: 680px) {
+      .wrapper { flex-direction: column; }
+      .left-col { min-width: unset; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Left Column -->
+  <div class="left-col">
+
+    <!-- Calendar -->
+    <div class="card">
+      <div class="cal-header">
+        <button class="cal-nav" id="prevBtn">&#8249;</button>
+        <h2 id="calTitle"></h2>
+        <button class="cal-nav" id="nextBtn">&#8250;</button>
+        <button class="view-toggle" id="viewToggle">年表示</button>
+      </div>
+
+      <!-- Monthly summary pie (hidden in year view) -->
+      <div class="pie-row" id="pieRow">
+        <svg class="pie-svg" width="56" height="56" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="22" fill="none" stroke="#eee" stroke-width="7"/>
+          <circle cx="28" cy="28" r="22" fill="none" stroke="#4a90e2" stroke-width="7"
+            stroke-dasharray="0 138.23" stroke-linecap="round"
+            transform="rotate(-90 28 28)" id="pieArc"/>
+        </svg>
+        <div class="pie-info">
+          <span class="pie-pct" id="piePct">—</span>
+          <span class="pie-sub">完全達成日の割合</span>
+          <span class="pie-detail" id="pieDetail"></span>
+        </div>
+      </div>
+
+      <!-- Grid area -->
+      <div id="calGrid"></div>
+    </div>
+
+    <!-- Recurring Task Manager -->
+    <div class="card">
+      <h2>繰り返しタスク</h2>
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="row-label">タスク名</label>
+          <input type="text" id="recurText" placeholder="例: 日報を書く" style="flex:1" />
+        </div>
+        <div class="form-row">
+          <label class="row-label">繰り返し</label>
+          <select id="recurType" style="flex:1">
+            <option value="daily">毎日</option>
+            <option value="weekly">毎週</option>
+            <option value="monthly">毎月</option>
+          </select>
+        </div>
+
+        <!-- Weekly: day-of-week picker -->
+        <div class="form-row" id="weekDaysRow" style="display:none">
+          <label class="row-label">曜日</label>
+          <div class="weekday-picker" id="weekDayPicker">
+            <button type="button" class="wd-btn" data-day="0">日</button>
+            <button type="button" class="wd-btn" data-day="1">月</button>
+            <button type="button" class="wd-btn" data-day="2">火</button>
+            <button type="button" class="wd-btn" data-day="3">水</button>
+            <button type="button" class="wd-btn" data-day="4">木</button>
+            <button type="button" class="wd-btn" data-day="5">金</button>
+            <button type="button" class="wd-btn" data-day="6">土</button>
+          </div>
+        </div>
+
+        <!-- Monthly: type picker -->
+        <div class="form-row" id="monthlyOptionsRow" style="display:none">
+          <label class="row-label">種別</label>
+          <div class="monthly-type-group">
+            <label class="radio-row">
+              <input type="radio" name="monthlyType" value="date" checked>
+              毎月
+              <input type="number" id="monthDay" min="1" max="31" value="1">
+              日
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="monthlyType" value="weekday">
+              毎月 第
+              <select id="monthWeekNum">
+                <option value="1">1</option><option value="2">2</option>
+                <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+              </select>
+              <select id="monthWeekDay">
+                <option value="0">日</option><option value="1">月</option><option value="2">火</option>
+                <option value="3">水</option><option value="4">木</option><option value="5">金</option>
+                <option value="6">土</option>
+              </select>
+              曜日
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="monthlyType" value="lastday">
+              毎月末日
+            </label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="row-label">開始日</label>
+          <input type="date" id="recurStart" />
+        </div>
+        <div class="form-row">
+          <label class="row-label">終了日 <span class="optional-hint">任意</span></label>
+          <input type="date" id="recurEnd" />
+        </div>
+        <button class="btn-add-recur" onclick="addRecurring()">繰り返しタスクを追加</button>
+      </div>
+      <ul class="recur-list" id="recurList"></ul>
+    </div>
+  </div>
+
+  <!-- Right: Daily Todo Panel -->
+  <div class="todo-panel">
+    <div class="card">
+      <h1>タスク</h1>
+      <div class="selected-date-label" id="selectedDateLabel">日付を選択してください</div>
+      <div class="input-row">
+        <input type="text" id="todoInput" placeholder="この日だけのタスクを追加..." />
+        <button onclick="addTodo()">追加</button>
+      </div>
+      <div id="recurTaskSection"></div>
+      <div id="onceTaskSection"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Data ──
+  const todos = {};
+  const recurring = [];
+  let nextId = 1;
+
+  let currentYear, currentMonth, selectedDate;
+  let calView = 'month';
+
+  const WD_NAMES = ['日','月','火','水','木','金','土'];
+
+  // ── Helpers ──
+  function toKey(y, m, d) {
+    return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  function parseKey(key) {
+    const [y,m,d] = key.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  function addOneYear(dateStr) {
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const next = new Date(y+1, m-1, d);
+    return toKey(next.getFullYear(), next.getMonth(), next.getDate());
+  }
+  function getNthWeekdayOfMonth(date) {
+    return Math.ceil(date.getDate() / 7);
+  }
+  function lastDayOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth()+1, 0).getDate();
+  }
+
+  function recurAppliesToDate(r, dateKey) {
+    const d = parseKey(dateKey);
+    const s = parseKey(r.startDate);
+    if (d < s) return false;
+    if (r.endDate) {
+      if (d > parseKey(r.endDate)) return false;
+    }
+    if (r.type === 'daily') return true;
+
+    if (r.type === 'weekly') {
+      const days = r.weekDays || [s.getDay()];
+      return days.includes(d.getDay());
+    }
+
+    if (r.type === 'monthly') {
+      const mc = r.monthlyConfig || { mType: 'date', day: s.getDate() };
+      if (mc.mType === 'date')    return d.getDate() === mc.day;
+      if (mc.mType === 'weekday') return d.getDay() === mc.weekDay && getNthWeekdayOfMonth(d) === mc.weekNum;
+      if (mc.mType === 'lastday') return d.getDate() === lastDayOfMonth(d);
+    }
+    return false;
+  }
+
+  // ── Per-day stats ──
+  function getDayStats(key) {
+    let total = 0, done = 0;
+    (todos[key] || []).forEach(t => { total++; if (t.done) done++; });
+    recurring.filter(r => recurAppliesToDate(r, key)).forEach(r => {
+      total++;
+      if (r.doneByDate[key]) done++;
+    });
+    return { total, done };
+  }
+
+  function calcPerfectDays(y, m) {
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    let daysWithTasks = 0, perfectDays = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const { total, done } = getDayStats(toKey(y, m, d));
+      if (total > 0) { daysWithTasks++; if (done === total) perfectDays++; }
+    }
+    return { daysWithTasks, perfectDays };
+  }
+
+  function calcYearStats(y) {
+    let daysWithTasks = 0, perfectDays = 0;
+    for (let m = 0; m < 12; m++) {
+      const s = calcPerfectDays(y, m);
+      daysWithTasks += s.daysWithTasks;
+      perfectDays   += s.perfectDays;
+    }
+    return { daysWithTasks, perfectDays };
+  }
+
+  // ── SVG helpers ──
+  const NS = 'http://www.w3.org/2000/svg';
+  function statColor(pct) {
+    if (pct === 100) return '#27ae60';
+    if (pct >= 50)   return '#f5a623';
+    return '#4a90e2';
+  }
+  function makePieSvg(pct, color, size, r, sw) {
+    const circ = 2 * Math.PI * r;
+    const svg  = document.createElementNS(NS, 'svg');
+    svg.setAttribute('width', size); svg.setAttribute('height', size);
+    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+    const cx = size/2, cy = size/2;
+    const bg = document.createElementNS(NS, 'circle');
+    bg.setAttribute('cx',cx); bg.setAttribute('cy',cy); bg.setAttribute('r',r);
+    bg.setAttribute('fill','none'); bg.setAttribute('stroke','#e0e0e0'); bg.setAttribute('stroke-width',sw);
+    const arc = document.createElementNS(NS, 'circle');
+    arc.setAttribute('cx',cx); arc.setAttribute('cy',cy); arc.setAttribute('r',r);
+    arc.setAttribute('fill','none'); arc.setAttribute('stroke',color); arc.setAttribute('stroke-width',sw);
+    arc.setAttribute('stroke-linecap','round');
+    arc.setAttribute('stroke-dasharray', `${(pct/100)*circ} ${circ}`);
+    arc.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+    svg.appendChild(bg); svg.appendChild(arc);
+    return svg;
+  }
+
+  // ── Render ──
+  function renderCalendar() {
+    document.getElementById('viewToggle').textContent = calView === 'month' ? '年表示' : '月表示';
+    document.getElementById('pieRow').style.display   = calView === 'month' ? '' : 'none';
+    if (calView === 'month') {
+      document.getElementById('calTitle').textContent = `${currentYear}年 ${currentMonth+1}月`;
+      renderMonthView();
+      renderPieSummary();
+    } else {
+      document.getElementById('calTitle').textContent = `${currentYear}年`;
+      renderYearView();
+    }
+  }
+
+  function renderPieSummary() {
+    const { daysWithTasks, perfectDays } = calcPerfectDays(currentYear, currentMonth);
+    const arc   = document.getElementById('pieArc');
+    const pctEl = document.getElementById('piePct');
+    const detEl = document.getElementById('pieDetail');
+    const CIRC  = 2 * Math.PI * 22;
+    if (daysWithTasks === 0) {
+      arc.setAttribute('stroke-dasharray', `0 ${CIRC}`);
+      arc.setAttribute('stroke', '#eee');
+      pctEl.textContent = '—';
+      detEl.textContent = 'タスクのある日なし';
+      return;
+    }
+    const pct = Math.round(perfectDays / daysWithTasks * 100);
+    arc.setAttribute('stroke-dasharray', `${(pct/100)*CIRC} ${CIRC}`);
+    arc.setAttribute('stroke', statColor(pct));
+    pctEl.textContent = `${pct}%`;
+    detEl.textContent = `${perfectDays} / ${daysWithTasks}日 完全達成`;
+  }
+
+  const DAY_LABELS = ['日','月','火','水','木','金','土'];
+
+  function renderMonthView() {
+    const grid = document.getElementById('calGrid');
+    grid.className = 'cal-grid';
+    grid.innerHTML = '';
+    DAY_LABELS.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'cal-day-label';
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+    const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+    const today       = new Date();
+    for (let i = 0; i < firstDay; i++) {
+      const el = document.createElement('div');
+      el.className = 'cal-day empty';
+      grid.appendChild(el);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = toKey(currentYear, currentMonth, d);
+      const el  = document.createElement('div');
+      el.className = 'cal-day';
+      const numEl = document.createElement('div');
+      numEl.className = 'day-num';
+      numEl.textContent = d;
+      el.appendChild(numEl);
+      if (today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d)
+        el.classList.add('today');
+      if (selectedDate === key) el.classList.add('selected');
+      const { total, done } = getDayStats(key);
+      if (total > 0) {
+        const pct   = Math.round(done/total*100);
+        const color = statColor(pct);
+        const stat  = document.createElement('div');
+        stat.className = 'day-stat';
+        stat.appendChild(makePieSvg(pct, color, 20, 7, 2.5));
+        const pctLbl = document.createElement('div');
+        pctLbl.className = 'day-stat-pct';
+        pctLbl.textContent = `${pct}%`;
+        pctLbl.style.color = color;
+        stat.appendChild(pctLbl);
+        el.appendChild(stat);
+      }
+      el.addEventListener('click', () => selectDate(key));
+      grid.appendChild(el);
+    }
+  }
+
+  function renderYearView() {
+    const grid = document.getElementById('calGrid');
+    grid.className = '';
+    grid.innerHTML = '';
+
+    // ── Year summary ──
+    const { daysWithTasks, perfectDays } = calcYearStats(currentYear);
+    const yearSummary = document.createElement('div');
+    yearSummary.className = 'year-summary';
+    if (daysWithTasks === 0) {
+      yearSummary.innerHTML = `
+        <div style="color:#ccc;font-size:.85rem;">この年にタスクのある日はありません</div>`;
+    } else {
+      const pct   = Math.round(perfectDays / daysWithTasks * 100);
+      const color = statColor(pct);
+      yearSummary.appendChild(makePieSvg(pct, color, 56, 22, 7));
+      const info = document.createElement('div');
+      info.className = 'pie-info';
+      info.innerHTML = `
+        <span class="pie-pct" style="color:${color}">${pct}%</span>
+        <span class="pie-sub">${currentYear}年 年間完全達成率</span>
+        <span class="pie-detail">${perfectDays} / ${daysWithTasks}日 完全達成</span>`;
+      yearSummary.appendChild(info);
+    }
+    grid.appendChild(yearSummary);
+
+    // ── Month grid ──
+    const monthGrid = document.createElement('div');
+    monthGrid.className = 'year-month-grid';
+    const today = new Date();
+    for (let m = 0; m < 12; m++) {
+      const { daysWithTasks: dwt, perfectDays: pd } = calcPerfectDays(currentYear, m);
+      const hasTasks = dwt > 0;
+      const pct      = hasTasks ? Math.round(pd/dwt*100) : null;
+      const color    = pct !== null ? statColor(pct) : '#ccc';
+      const card = document.createElement('div');
+      card.className = 'month-card';
+      if (today.getFullYear()===currentYear && today.getMonth()===m) card.classList.add('current-month');
+      const title = document.createElement('div');
+      title.className = 'month-card-title';
+      title.textContent = `${m+1}月`;
+      card.appendChild(title);
+      card.appendChild(makePieSvg(pct??0, color, 36, 14, 4));
+      const pctEl = document.createElement('div');
+      pctEl.className = 'month-card-pct';
+      pctEl.style.color = color;
+      pctEl.textContent = pct !== null ? `${pct}%` : '—';
+      const det = document.createElement('div');
+      det.className = 'month-card-detail';
+      det.textContent = hasTasks ? `${pd}/${dwt}日` : 'タスクなし';
+      card.appendChild(pctEl);
+      card.appendChild(det);
+      card.addEventListener('click', () => {
+        currentMonth = m; calView = 'month'; renderCalendar();
+      });
+      monthGrid.appendChild(card);
+    }
+    grid.appendChild(monthGrid);
+  }
+
+  function selectDate(key) {
+    selectedDate = key;
+    renderCalendar();
+    renderTodos();
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    if (calView === 'month') { if (--currentMonth < 0)  { currentMonth = 11; currentYear--; } }
+    else currentYear--;
+    renderCalendar();
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    if (calView === 'month') { if (++currentMonth > 11) { currentMonth = 0;  currentYear++; } }
+    else currentYear++;
+    renderCalendar();
+  });
+  document.getElementById('viewToggle').addEventListener('click', () => {
+    calView = calView === 'month' ? 'year' : 'month';
+    renderCalendar();
+  });
+
+  // ── Recurring form: show/hide extra fields ──
+  document.getElementById('recurType').addEventListener('change', function () {
+    document.getElementById('weekDaysRow').style.display      = this.value === 'weekly'  ? '' : 'none';
+    document.getElementById('monthlyOptionsRow').style.display = this.value === 'monthly' ? '' : 'none';
+  });
+
+  document.querySelectorAll('.wd-btn').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('active'));
+  });
+
+  // Auto-select start date's weekday when start date changes and type is weekly
+  document.getElementById('recurStart').addEventListener('change', function () {
+    if (this.value) {
+      // auto end date (only if not set)
+      if (!document.getElementById('recurEnd').value)
+        document.getElementById('recurEnd').value = addOneYear(this.value);
+      // auto select weekday
+      if (document.getElementById('recurType').value === 'weekly') {
+        const dow = parseKey(this.value).getDay();
+        document.querySelectorAll('.wd-btn').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.day) === dow);
+        });
+      }
+      // auto fill monthly date
+      if (document.getElementById('recurType').value === 'monthly') {
+        document.getElementById('monthDay').value = parseKey(this.value).getDate();
+      }
+    }
+  });
+
+  // ── Recurring Task Manager ──
+  function scheduleLabel(r) {
+    if (r.type === 'daily') return '毎日';
+    if (r.type === 'weekly') {
+      const days = (r.weekDays || [parseKey(r.startDate).getDay()]).map(d => WD_NAMES[d]).join('・');
+      return `毎週 ${days}`;
+    }
+    if (r.type === 'monthly') {
+      const mc = r.monthlyConfig || { mType: 'date', day: parseKey(r.startDate).getDate() };
+      if (mc.mType === 'date')    return `毎月 ${mc.day}日`;
+      if (mc.mType === 'weekday') return `毎月 第${mc.weekNum}${WD_NAMES[mc.weekDay]}曜日`;
+      if (mc.mType === 'lastday') return '毎月末日';
+    }
+    return '';
+  }
+
+  function addRecurring() {
+    const text  = document.getElementById('recurText').value.trim();
+    const type  = document.getElementById('recurType').value;
+    const start = document.getElementById('recurStart').value;
+    const end   = document.getElementById('recurEnd').value;
+    if (!text || !start) { alert('タスク名と開始日を入力してください'); return; }
+    if (end && start > end) { alert('終了日は開始日以降にしてください'); return; }
+
+    let weekDays = null;
+    let monthlyConfig = null;
+
+    if (type === 'weekly') {
+      weekDays = Array.from(document.querySelectorAll('.wd-btn.active')).map(b => parseInt(b.dataset.day));
+      if (weekDays.length === 0) { alert('曜日を1つ以上選択してください'); return; }
+    }
+    if (type === 'monthly') {
+      const mType = document.querySelector('input[name="monthlyType"]:checked').value;
+      if (mType === 'date') {
+        monthlyConfig = { mType: 'date', day: parseInt(document.getElementById('monthDay').value) };
+      } else if (mType === 'weekday') {
+        monthlyConfig = {
+          mType: 'weekday',
+          weekNum: parseInt(document.getElementById('monthWeekNum').value),
+          weekDay: parseInt(document.getElementById('monthWeekDay').value)
+        };
+      } else {
+        monthlyConfig = { mType: 'lastday' };
+      }
+    }
+
+    recurring.push({ id: nextId++, text, type, startDate: start, endDate: end||null, weekDays, monthlyConfig, doneByDate: {} });
+    document.getElementById('recurText').value  = '';
+    document.getElementById('recurStart').value = '';
+    document.getElementById('recurEnd').value   = '';
+    document.querySelectorAll('.wd-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('input[name="monthlyType"][value="date"]').checked = true;
+
+    renderRecurringList();
+    renderCalendar();
+    renderTodos();
+  }
+
+  function deleteRecurring(id) {
+    const idx = recurring.findIndex(r => r.id === id);
+    if (idx !== -1) recurring.splice(idx, 1);
+    renderRecurringList();
+    renderCalendar();
+    renderTodos();
+  }
+
+  const TYPE_LABEL = { daily: '毎日', weekly: '毎週', monthly: '毎月' };
+
+  function renderRecurringList() {
+    const ul = document.getElementById('recurList');
+    ul.innerHTML = '';
+    if (recurring.length === 0) {
+      ul.innerHTML = '<li style="color:#ccc;font-size:.85rem;padding:8px 0;">繰り返しタスクなし</li>';
+      return;
+    }
+    recurring.forEach(r => {
+      const endLabel = r.endDate ? r.endDate : '無期限';
+      const li = document.createElement('li');
+      li.className = 'recur-item';
+      li.innerHTML = `
+        <span class="badge ${r.type}">${scheduleLabel(r)}</span>
+        <span class="ri-text">
+          ${r.text}
+          <br><span class="ri-meta">${r.startDate} 〜 ${endLabel}</span>
+        </span>
+        <button class="delete-btn">削除</button>
+      `;
+      li.querySelector('.delete-btn').addEventListener('click', () => deleteRecurring(r.id));
+      ul.appendChild(li);
+    });
+  }
+
+  // ── Todo Panel ──
+  function renderTodos() {
+    const label    = document.getElementById('selectedDateLabel');
+    const recurSec = document.getElementById('recurTaskSection');
+    const onceSec  = document.getElementById('onceTaskSection');
+    recurSec.innerHTML = '';
+    onceSec.innerHTML  = '';
+    if (!selectedDate) { label.textContent = '日付を選択してください'; return; }
+    const [y,m,d] = selectedDate.split('-');
+    label.textContent = `${y}年${parseInt(m)}月${parseInt(d)}日`;
+
+    const applicableRecur = recurring.filter(r => recurAppliesToDate(r, selectedDate));
+    if (applicableRecur.length > 0) {
+      const sec = document.createElement('div');
+      const lbl = document.createElement('div');
+      lbl.className = 'section-label'; lbl.textContent = '繰り返しタスク';
+      sec.appendChild(lbl);
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      applicableRecur.forEach(r => {
+        const done = r.doneByDate[selectedDate] || false;
+        const li   = document.createElement('li');
+        li.className = 'task-item' + (done ? ' done' : '');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox'; checkbox.checked = done;
+        checkbox.addEventListener('change', () => {
+          r.doneByDate[selectedDate] = checkbox.checked;
+          li.classList.toggle('done', checkbox.checked);
+          renderCalendar();
+        });
+        const badge = document.createElement('span');
+        badge.className = `badge ${r.type}`;
+        badge.textContent = scheduleLabel(r);
+        const span = document.createElement('span');
+        span.className = 'task-text'; span.textContent = r.text;
+        li.appendChild(checkbox); li.appendChild(badge); li.appendChild(span);
+        ul.appendChild(li);
+      });
+      sec.appendChild(ul);
+      recurSec.appendChild(sec);
+    }
+
+    const items = todos[selectedDate] || [];
+    const sec2  = document.createElement('div');
+    const lbl2  = document.createElement('div');
+    lbl2.className = 'section-label'; lbl2.textContent = 'この日のタスク';
+    sec2.appendChild(lbl2);
+    if (items.length === 0) {
+      const msg = document.createElement('div');
+      msg.className = 'empty-msg'; msg.textContent = 'タスクはありません';
+      sec2.appendChild(msg);
+    } else {
+      const ul2 = document.createElement('ul');
+      ul2.className = 'task-list';
+      items.forEach((item, idx) => {
+        const li = document.createElement('li');
+        li.className = 'task-item' + (item.done ? ' done' : '');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox'; checkbox.checked = item.done;
+        checkbox.addEventListener('change', () => {
+          item.done = checkbox.checked;
+          li.classList.toggle('done', item.done);
+          renderCalendar();
+        });
+        const span = document.createElement('span');
+        span.className = 'task-text'; span.textContent = item.text;
+        const del = document.createElement('button');
+        del.textContent = '削除'; del.className = 'delete-btn';
+        del.onclick = () => { items.splice(idx, 1); renderTodos(); renderCalendar(); };
+        li.appendChild(checkbox); li.appendChild(span); li.appendChild(del);
+        ul2.appendChild(li);
+      });
+      sec2.appendChild(ul2);
+    }
+    onceSec.appendChild(sec2);
+  }
+
+  const todoInput = document.getElementById('todoInput');
+  todoInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+  function addTodo() {
+    if (!selectedDate) return;
+    const text = todoInput.value.trim();
+    if (!text) return;
+    if (!todos[selectedDate]) todos[selectedDate] = [];
+    todos[selectedDate].push({ text, done: false });
+    todoInput.value = '';
+    todoInput.focus();
+    renderTodos();
+    renderCalendar();
+  }
+
+  // ── Init ──
+  const now    = new Date();
+  currentYear  = now.getFullYear();
+  currentMonth = now.getMonth();
+  selectedDate = toKey(currentYear, currentMonth, now.getDate());
+  const todayStr = selectedDate;
+  document.getElementById('recurStart').value = todayStr;
+  document.getElementById('recurEnd').value   = addOneYear(todayStr);
+
+  renderRecurringList();
+  renderCalendar();
+  renderTodos();
+</script>
+</body>
+</html>
