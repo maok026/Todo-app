@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FQBMWBL134"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-FQBMWBL134');
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4491116730564800"
+       crossorigin="anonymous"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>このアプリについて - Todoアプリ</title>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Todoアプリ">
+  <meta property="og:title" content="Todoアプリ｜ルーティンタスクをシンプルに管理">
+  <meta property="og:description" content="毎日・毎週・毎月の習慣をカレンダーで見える化。勉強・運動・健康管理などのセルフマネジメントにぴったりの無料タスク管理アプリです。">
+  <meta property="og:url" content="https://todo-app-one-peach-53.vercel.app">
+  <meta property="og:image" content="https://todo-app-one-peach-53.vercel.app/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Todoアプリ｜ルーティンタスクをシンプルに管理">
+  <meta name="twitter:description" content="毎日・毎週・毎月の習慣をカレンダーで見える化。勉強・運動・健康管理などのセルフマネジメントにぴったりの無料タスク管理アプリです。">
+  <meta name="twitter:image" content="https://todo-app-one-peach-53.vercel.app/og-image.png">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      background: #eef2f9;
+      min-height: 100vh;
+      color: #1e2a3a;
+    }
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: linear-gradient(135deg, #5a9de8 0%, #2c6db5 100%);
+      color: white;
+      padding: 18px 20px 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      box-shadow: 0 2px 10px rgba(44,109,181,0.28);
+    }
+
+    /* ── View ── */
+    .view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px 14px 80px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #5a9de8 0%, #2c6db5 100%);
+      border-radius: 18px;
+      padding: 28px 24px 24px;
+      color: white;
+      box-shadow: 0 4px 18px rgba(44,109,181,0.30);
+    }
+    .hero-app-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      opacity: 0.85;
+      margin-bottom: 8px;
+    }
+    .hero-catch {
+      font-size: 1.35rem;
+      font-weight: 800;
+      line-height: 1.4;
+      margin-bottom: 10px;
+      letter-spacing: 0.01em;
+    }
+    .hero-sub {
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0.90;
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+    .hero-desc {
+      font-size: 0.78rem;
+      opacity: 0.80;
+      line-height: 1.6;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 2px 14px rgba(74,144,226,0.10);
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 14px;
+      background: linear-gradient(135deg, #5a9de8, #2c6db5);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Feature cards ── */
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #f5f8fd;
+      border-radius: 12px;
+      padding: 14px 14px;
+    }
+    .feature-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 1px;
+    }
+    .feature-body {}
+    .feature-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    .feature-desc {
+      font-size: 0.78rem;
+      color: #6b7c95;
+      line-height: 1.6;
+    }
+
+    /* ── How to use ── */
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .step-num {
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, #5a9de8, #2c6db5);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.78rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-text {
+      font-size: 0.88rem;
+      color: #3a4a5c;
+      line-height: 1.6;
+      padding-top: 3px;
+    }
+
+    /* ── Info card ── */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f4fa;
+      font-size: 0.85rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #94a3b8; font-weight: 600; font-size: 0.78rem; }
+    .info-value { color: #2c3e50; font-weight: 600; }
+
+    /* ── Footer ── */
+    .cal-footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      padding: 6px 0 8px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Bottom navigation ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      display: flex; background: white; border-top: 1px solid #e8eef8;
+      z-index: 100; height: 58px;
+    }
+    .nav-item {
+      flex: 1; background: none; border: none; padding: 8px 0 6px;
+      font-size: 0.82rem; font-weight: 600; color: #94a3b8;
+      cursor: pointer; border-radius: 0; font-family: inherit;
+      text-decoration: none; display: flex; align-items: center; justify-content: center;
+    }
+    .nav-item:active { background: #f5f8fd; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+
+  <div class="app-header">このアプリについて</div>
+
+  <div class="view">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-app-name">Todoアプリ</div>
+      <div class="hero-catch">ルーティンタスクを<br>シンプルに管理</div>
+      <div class="hero-sub">毎日・毎週・毎月の習慣を、カレンダーで見える化</div>
+      <div class="hero-desc">勉強・運動・健康管理などのセルフマネジメントにぴったり</div>
+    </div>
+
+    <!-- Features -->
+    <div class="card">
+      <div class="card-title">アプリの特徴</div>
+      <div class="feature-list">
+
+        <div class="feature-item">
+          <div class="feature-icon">🔁</div>
+          <div class="feature-body">
+            <div class="feature-title">ルーティンタスクに特化</div>
+            <div class="feature-desc">毎日・毎週・毎月繰り返すタスクを簡単に登録できます。</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">📅</div>
+          <div class="feature-body">
+            <div class="feature-title">柔軟なスケジュール管理</div>
+            <div class="feature-desc">「週に1回ジムに行く」「月に1回まとめを書く」など、特定の日付や曜日に縛られない週単位・月単位の予定も管理できます。</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <div class="feature-body">
+            <div class="feature-title">進捗を一目で確認</div>
+            <div class="feature-desc">日次・週次・月次それぞれの達成率を円グラフでカレンダー上に表示します。</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">📱</div>
+          <div class="feature-body">
+            <div class="feature-title">ホーム画面に追加して使える</div>
+            <div class="feature-desc">ホーム画面に追加するとアプリのように起動できます（PWA対応）。</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">🔒</div>
+          <div class="feature-body">
+            <div class="feature-title">登録不要・完全無料</div>
+            <div class="feature-desc">データはすべてお使いの端末内に保存されます。アカウント登録は不要で、無料でご利用いただけます。</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">🌱</div>
+          <div class="feature-body">
+            <div class="feature-title">セルフマネジメントに最適</div>
+            <div class="feature-desc">勉強・運動・健康管理など、自分を律するためのルーティンタスクの管理に特化しています。</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- How to use -->
+    <div class="card">
+      <div class="card-title">使い方</div>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">下のメニューの「タスク追加」から繰り返しタスクを登録する</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">カレンダーの日付をタップしてその日のタスクを確認する</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">タスクをチェックして完了を記録する</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">週次・月次グラフで達成率を確認する</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="card">
+      <div class="card-title">運営情報</div>
+      <div class="info-row">
+        <span class="info-label">運営者</span>
+        <span class="info-value">asanoha inc.</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">プライバシーポリシー</span>
+        <a href="privacy.html" style="color:#4a90e2; font-size:0.85rem; font-weight:600; text-decoration:none;">確認する →</a>
+      </div>
+    </div>
+
+    <div class="cal-footer">©asanoha inc. 2026</div>
+
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a class="nav-item" href="index.html">🏠 ホーム</a>
+    <a class="nav-item" href="index.html">➕ タスク追加</a>
+    <a class="nav-item active" href="info.html">ℹ️ Info</a>
+  </nav>
+
+</div>
+</body>
+</html>

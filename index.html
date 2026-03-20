@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FQBMWBL134"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-FQBMWBL134');
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4491116730564800"
+       crossorigin="anonymous"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Todoアプリ</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4a90e2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Todoアプリ">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Todoアプリ">
+  <meta property="og:title" content="Todoアプリ｜ルーティンタスクをシンプルに管理">
+  <meta property="og:description" content="毎日・毎週・毎月の習慣をカレンダーで見える化。勉強・運動・健康管理などのセルフマネジメントにぴったりの無料タスク管理アプリです。">
+  <meta property="og:url" content="https://todo-app-one-peach-53.vercel.app">
+  <meta property="og:image" content="https://todo-app-one-peach-53.vercel.app/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Todoアプリ｜ルーティンタスクをシンプルに管理">
+  <meta name="twitter:description" content="毎日・毎週・毎月の習慣をカレンダーで見える化。勉強・運動・健康管理などのセルフマネジメントにぴったりの無料タスク管理アプリです。">
+  <meta name="twitter:image" content="https://todo-app-one-peach-53.vercel.app/og-image.png">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      background: #eef2f9;
+      min-height: 100vh;
+      color: #1e2a3a;
+    }
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: linear-gradient(135deg, #5a9de8 0%, #2c6db5 100%);
+      color: white;
+      padding: 18px 20px 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      box-shadow: 0 2px 10px rgba(44,109,181,0.28);
+    }
+
+    /* ── View ── */
+    .view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px 14px 80px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 2px 14px rgba(74,144,226,0.10);
+      padding: 20px;
+    }
+    .card h2 {
+      font-size: 0.97rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 16px;
+    }
+
+    /* ── Calendar header ── */
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 6px;
+    }
+    .cal-header h2 {
+      margin: 0;
+      flex: 1;
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    .cal-nav {
+      background: #eef2f9;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: #4a90e2;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+    .cal-nav:active { background: #dce8f8; }
+    .view-toggle {
+      font-size: 0.75rem;
+      padding: 7px 14px;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+    .view-toggle:active { background: #2c6db5; }
+
+    /* ── Pie row ── */
+    .pie-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0 14px;
+      border-bottom: 1px solid #eef2f9;
+      margin-bottom: 14px;
+    }
+    .pie-svg { flex-shrink: 0; }
+    .pie-info { display: flex; flex-direction: column; }
+    .pie-pct   { font-size: 1.5rem; font-weight: 800; color: #2c3e50; line-height: 1; }
+    .pie-sub   { font-size: 0.72rem; color: #94a3b8; margin-top: 4px; }
+    .pie-detail { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+
+    /* ── Calendar grid ── */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr) 34px;
+      gap: 3px;
+    }
+    .week-pie-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 2px 0;
+    }
+    .week-pie-cell:active { background: #eef2f9; }
+    .week-pie-cell.pg-active { background: #eef2f9; }
+    .week-pie-pct {
+      font-size: 0.48rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .cal-day-label {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      padding: 5px 0;
+      font-weight: 600;
+    }
+    .cal-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 5px 2px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      color: #2c3e50;
+      border: 2px solid transparent;
+      min-height: 58px;
+    }
+    .cal-day:active:not(.empty) { background: #dce8f8; }
+    .cal-day.today > .day-num {
+      font-weight: 800;
+      color: white;
+      background: #4a90e2;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      line-height: 1;
+    }
+    .cal-day.selected { border-color: #4a90e2; background: #eef2f9; }
+    .cal-day.empty { cursor: default; }
+    .day-num { line-height: 1.7; font-size: 0.82rem; }
+    .day-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; margin-top: 2px; }
+    .day-stat-pct { font-size: 0.55rem; line-height: 1; font-weight: 600; }
+
+    /* ── Year view ── */
+    .year-summary {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0 14px;
+      border-bottom: 1px solid #eef2f9;
+      margin-bottom: 14px;
+    }
+    .year-month-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .month-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 4px 10px;
+      border-radius: 14px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      background: #f5f8fd;
+    }
+    .month-card:active { background: #dce8f8; border-color: #a5c8f5; }
+    .month-card.current-month { border-color: #4a90e2; background: #eef2f9; }
+    .month-card-title  { font-size: 0.82rem; font-weight: 700; color: #2c3e50; }
+    .month-card-pct    { font-size: 0.95rem; font-weight: 800; line-height: 1; }
+    .month-card-detail { font-size: 0.62rem; color: #94a3b8; }
+
+    /* ── Todo panel ── */
+    .selected-date-label {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 14px;
+    }
+    .input-row { display: flex; gap: 10px; margin-bottom: 4px; }
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 0.97rem;
+      outline: none;
+      color: #2c3e50;
+      background: #f8fafd;
+    }
+    input[type="text"]:focus { border-color: #4a90e2; background: white; }
+    button {
+      padding: 12px 20px;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: inherit;
+    }
+    button:active { background: #2c6db5; }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin: 20px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 12px;
+      background: #b8ccec;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    ul.task-list { list-style: none; }
+    li.task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f4fa;
+    }
+    li.task-item:last-child { border-bottom: none; }
+    li.task-item.done .task-text { text-decoration: line-through; color: #b0b8c8; }
+    li.task-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+      accent-color: #4a90e2;
+    }
+    .task-text { flex: 1; font-size: 0.95rem; line-height: 1.5; color: #2c3e50; }
+    .delete-btn {
+      background: none !important;
+      border: none;
+      color: #c8d3e0;
+      font-size: 0.75rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .delete-btn:active { color: #ef4444 !important; background: #fff0f0 !important; }
+    .empty-msg { color: #c8d3e0; font-size: 0.85rem; text-align: center; padding: 16px 0; }
+
+    /* ── Badges (blue theme) ── */
+    .badge {
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge.daily   { background: #dce8f8; color: #2c6db5; }
+    .badge.weekly  { background: #b8d4f0; color: #1a508a; }
+    .badge.monthly { background: #9ec4eb; color: #0f3a66; }
+
+    /* ── Recurring task form ── */
+    .form-grid { display: grid; gap: 12px; }
+    .form-row { display: flex; gap: 10px; align-items: flex-start; }
+    .form-row label.row-label {
+      font-size: 0.78rem;
+      color: #6b7c95;
+      min-width: 52px;
+      padding-top: 11px;
+      font-weight: 600;
+    }
+    .form-row input[type="date"],
+    .form-row select,
+    .form-row input[type="number"] {
+      padding: 9px 10px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      background: #f8fafd;
+      color: #2c3e50;
+      font-family: inherit;
+    }
+    .form-row input[type="date"]:focus,
+    .form-row select:focus { border-color: #4a90e2; background: white; outline: none; }
+    .form-row input[type="date"], .form-row select { flex: 1; }
+    .optional-hint { font-size: 0.7rem; color: #94a3b8; }
+    .btn-add-recur {
+      width: 100%;
+      margin-top: 6px;
+      padding: 13px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #5a9de8 0%, #2c6db5 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(74,144,226,0.28);
+      font-family: inherit;
+    }
+    .btn-add-recur:active { background: #2c6db5; box-shadow: none; }
+
+    /* ── Weekday picker ── */
+    .weekday-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+    .wd-btn {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      background: #eef2f9;
+      color: #4a70a5;
+      border: 1.5px solid #d1dff7;
+      border-radius: 50%;
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+    }
+    .wd-btn:active { background: #dce8f8; }
+    .wd-btn.active { background: #4a90e2; color: white; border-color: #4a90e2; }
+
+    /* ── Monthly options ── */
+    .monthly-type-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .radio-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.82rem;
+      color: #6b7c95;
+      cursor: pointer;
+      flex-wrap: wrap;
+    }
+    .radio-row input[type="radio"] { width: 16px; height: 16px; cursor: pointer; margin: 0; accent-color: #4a90e2; }
+    .radio-row input[type="number"] { width: 52px; }
+    .radio-row select { padding: 5px 6px; }
+
+    /* ── Recurring task list ── */
+    .recur-list { list-style: none; margin-top: 12px; }
+    .recur-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 0;
+      border-bottom: 1px solid #f0f4fa;
+      font-size: 0.85rem;
+    }
+    .recur-item:last-child { border-bottom: none; }
+    .recur-item .ri-text { flex: 1; color: #2c3e50; line-height: 1.5; }
+    .recur-item .ri-meta { font-size: 0.7rem; color: #94a3b8; }
+
+    /* ── Progress graphs ── */
+    .progress-graphs {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .progress-graph-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 10px 8px 8px;
+      border-radius: 14px;
+    }
+    .progress-graph-item:active { background: #eef2f9; }
+    .progress-graph-item.pg-active { background: #eef2f9; }
+    .progress-graph-pct {
+      font-size: 1.0rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-top: 2px;
+    }
+    .progress-graph-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.04em;
+    }
+    .progress-graph-count {
+      font-size: 0.65rem;
+      color: #b0bec8;
+    }
+    .progress-graph-divider {
+      width: 1px;
+      height: 70px;
+      background: #e8eef8;
+      flex-shrink: 0;
+      margin: 0 4px;
+    }
+    /* ── Progress task panel ── */
+    .progress-task-panel {
+      border-top: 1px solid #eef2f9;
+      padding-top: 10px;
+      margin-bottom: 12px;
+    }
+    .progress-panel-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .progress-panel-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 10px;
+      background: #b8ccec;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ── */
+    .cal-footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      padding: 6px 0 8px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Pages ── */
+    .page { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+
+    /* ── Sheet overlay ── */
+    .sheet-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.42);
+      z-index: 50; opacity: 0; transition: opacity 0.25s; pointer-events: none;
+    }
+    .sheet-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    /* ── Bottom sheet ── */
+    .bottom-sheet {
+      position: fixed; bottom: 58px; left: 50%; max-width: 480px; width: 100%;
+      transform: translateX(-50%) translateY(110%);
+      background: white; border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 30px rgba(44,109,181,0.20);
+      z-index: 60; transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      max-height: 70vh; display: flex; flex-direction: column;
+    }
+    .bottom-sheet.open { transform: translateX(-50%) translateY(0); }
+    .sheet-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px 12px; border-bottom: 1px solid #eef2f9; flex-shrink: 0;
+    }
+    .sheet-head .selected-date-label { margin: 0; }
+    .sheet-close-btn {
+      background: #eef2f9; border: none; border-radius: 50%;
+      width: 32px; height: 32px; font-size: 1.2rem; line-height: 32px;
+      cursor: pointer; color: #94a3b8; flex-shrink: 0; padding: 0;
+      font-family: inherit;
+    }
+    .sheet-close-btn:active { background: #dce8f8; }
+    .sheet-body { padding: 4px 20px 20px; overflow-y: auto; flex: 1; }
+
+    /* ── Bottom navigation ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      display: flex; background: white; border-top: 1px solid #e8eef8;
+      z-index: 100; height: 58px;
+    }
+    .nav-item {
+      flex: 1; background: none; border: none; padding: 8px 0 6px;
+      font-size: 0.82rem; font-weight: 600; color: #94a3b8;
+      cursor: pointer; border-radius: 0; font-family: inherit;
+    }
+    .nav-item:active { background: #f5f8fd; }
+    .nav-item.active { color: #4a90e2; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+
+  <div class="app-header">Todoアプリ</div>
+
+  <!-- Page 1: Home (Calendar) -->
+  <div id="homePage" class="page">
+    <div class="view">
+
+      <!-- Calendar -->
+      <div class="card">
+        <div class="cal-header">
+          <button class="cal-nav" id="prevBtn">&#8249;</button>
+          <h2 id="calTitle"></h2>
+          <button class="cal-nav" id="nextBtn">&#8250;</button>
+          <button class="view-toggle" id="viewToggle">年表示</button>
+        </div>
+        <div class="pie-row" id="pieRow">
+          <div class="progress-graphs">
+            <div class="progress-graph-item" id="monthGraphItem">
+              <div id="monthGraphSvg"></div>
+              <div class="progress-graph-pct" id="monthGraphPct">—</div>
+              <div class="progress-graph-label">月次</div>
+              <div class="progress-graph-count" id="monthGraphCount">—</div>
+            </div>
+          </div>
+        </div>
+        <div id="calGrid"></div>
+      </div>
+
+      <div class="cal-footer">©asanoha inc. 2026</div>
+
+    </div>
+  </div>
+
+  <!-- Page 2: Add Task -->
+  <div id="addPage" class="page" style="display:none">
+    <div class="view">
+
+      <!-- Recurring Task Manager -->
+      <div class="card">
+        <h2>タスクの追加</h2>
+        <div class="form-grid">
+          <div class="form-row">
+            <label class="row-label">タスク名</label>
+            <input type="text" id="recurText" placeholder="例: 日報を書く" style="flex:1" />
+          </div>
+          <div class="form-row">
+            <label class="row-label">繰り返し</label>
+            <select id="recurType" style="flex:1">
+              <option value="daily">毎日</option>
+              <option value="weekly">毎週</option>
+              <option value="monthly">毎月</option>
+            </select>
+          </div>
+
+          <!-- Weekly: specific day or any day -->
+          <div class="form-row" id="weekDaysRow" style="display:none">
+            <label class="row-label">設定</label>
+            <div class="monthly-type-group">
+              <label class="radio-row">
+                <input type="radio" name="weeklyType" value="specific" checked> 特定の曜日に行う
+              </label>
+              <div class="weekday-picker" id="weekDayPicker">
+                <button type="button" class="wd-btn" data-day="0">日</button>
+                <button type="button" class="wd-btn" data-day="1">月</button>
+                <button type="button" class="wd-btn" data-day="2">火</button>
+                <button type="button" class="wd-btn" data-day="3">水</button>
+                <button type="button" class="wd-btn" data-day="4">木</button>
+                <button type="button" class="wd-btn" data-day="5">金</button>
+                <button type="button" class="wd-btn" data-day="6">土</button>
+              </div>
+              <label class="radio-row">
+                <input type="radio" name="weeklyType" value="any"> 週のうちいつでもよい
+              </label>
+            </div>
+          </div>
+
+          <!-- Monthly: type picker -->
+          <div class="form-row" id="monthlyOptionsRow" style="display:none">
+            <label class="row-label">種別</label>
+            <div class="monthly-type-group">
+              <label class="radio-row">
+                <input type="radio" name="monthlyType" value="date" checked>
+                毎月
+                <input type="number" id="monthDay" min="1" max="31" value="1">
+                日
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="monthlyType" value="weekday">
+                毎月 第
+                <select id="monthWeekNum">
+                  <option value="1">1</option><option value="2">2</option>
+                  <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+                <select id="monthWeekDay">
+                  <option value="0">日</option><option value="1">月</option><option value="2">火</option>
+                  <option value="3">水</option><option value="4">木</option><option value="5">金</option>
+                  <option value="6">土</option>
+                </select>
+                曜日
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="monthlyType" value="lastday">
+                毎月末日
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="monthlyType" value="none">
+                月のうちいつでもよい
+              </label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label class="row-label">開始日</label>
+            <input type="date" id="recurStart" />
+          </div>
+          <div class="form-row">
+            <label class="row-label">終了日 <span class="optional-hint">任意</span></label>
+            <input type="date" id="recurEnd" />
+          </div>
+          <button class="btn-add-recur" onclick="addRecurring()">繰り返しタスクを追加</button>
+        </div>
+        <ul class="recur-list" id="recurList"></ul>
+      </div>
+
+      <div class="cal-footer">©asanoha inc. 2026</div>
+
+    </div>
+  </div>
+
+  <!-- Sheet Overlay -->
+  <div id="sheetOverlay" class="sheet-overlay"></div>
+
+  <!-- Bottom Sheet: Task List -->
+  <div id="bottomSheet" class="bottom-sheet">
+    <div class="sheet-head">
+      <div class="selected-date-label" id="selectedDateLabel">日付を選択してください</div>
+      <button class="sheet-close-btn" id="sheetCloseBtn">×</button>
+    </div>
+    <div class="sheet-body">
+      <div id="recurTaskSection"></div>
+      <div id="weekTaskSection"></div>
+      <div id="monthTaskSection"></div>
+      <div id="onceTaskSection"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="navHome">🏠 ホーム</button>
+    <button class="nav-item" id="navAdd">➕ タスク追加</button>
+    <button class="nav-item" id="navInfo">ℹ️ Info</button>
+  </nav>
+
+</div>
+
+<script>
+  // ── Data ──
+  const todos = {};
+  const recurring = [];
+  let nextId = 1;
+
+  function saveData() {
+    localStorage.setItem('todo-app-todos', JSON.stringify(todos));
+    localStorage.setItem('todo-app-recurring', JSON.stringify(recurring));
+    localStorage.setItem('todo-app-nextId', String(nextId));
+  }
+
+  function loadData() {
+    try {
+      const savedTodos = JSON.parse(localStorage.getItem('todo-app-todos') || '{}');
+      Object.assign(todos, savedTodos);
+      const savedRecurring = JSON.parse(localStorage.getItem('todo-app-recurring') || '[]');
+      recurring.push(...savedRecurring);
+      nextId = parseInt(localStorage.getItem('todo-app-nextId') || '1', 10);
+    } catch(e) {}
+  }
+
+  let currentYear, currentMonth, selectedDate;
+  let calView = 'month';
+  let progressView = null;    // null | 'week' | 'month'
+  let progressWeekRef = null; // Sunday date key of the tapped week pie
+  let currentPage = 'home';
+
+  function openSheet() {
+    renderTodos();
+    document.getElementById('sheetOverlay').classList.add('visible');
+    document.getElementById('bottomSheet').classList.add('open');
+  }
+
+  function closeSheet() {
+    document.getElementById('sheetOverlay').classList.remove('visible');
+    document.getElementById('bottomSheet').classList.remove('open');
+  }
+
+  function showPage(page) {
+    currentPage = page;
+    document.getElementById('homePage').style.display = page === 'home' ? '' : 'none';
+    document.getElementById('addPage').style.display  = page === 'add'  ? '' : 'none';
+    document.getElementById('navHome').classList.toggle('active', page === 'home');
+    document.getElementById('navAdd').classList.toggle('active', page === 'add');
+    if (page !== 'home') closeSheet();
+  }
+
+  const WD_NAMES = ['日','月','火','水','木','金','土'];
+
+  // ── Helpers ──
+  function toKey(y, m, d) {
+    return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  function parseKey(key) {
+    const [y,m,d] = key.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  function addOneYear(dateStr) {
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const next = new Date(y+1, m-1, d);
+    return toKey(next.getFullYear(), next.getMonth(), next.getDate());
+  }
+  function getNthWeekdayOfMonth(date) {
+    return Math.ceil(date.getDate() / 7);
+  }
+  function lastDayOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth()+1, 0).getDate();
+  }
+  function toWeekKey(dateKey) {
+    const d = parseKey(dateKey);
+    const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+    return toKey(sunday.getFullYear(), sunday.getMonth(), sunday.getDate());
+  }
+  function toMonthKey(dateKey) {
+    const parts = dateKey.split('-');
+    return `${parts[0]}-${parts[1]}`;
+  }
+  function recurWeekApplies(r, dateKey) {
+    if (r.type !== 'weekly' || !r.noSpecificDay) return false;
+    const d = parseKey(dateKey);
+    const weekStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+    const weekEnd   = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+    const s = parseKey(r.startDate);
+    if (s > weekEnd) return false;
+    if (r.endDate && parseKey(r.endDate) < weekStart) return false;
+    return true;
+  }
+  function recurMonthApplies(r, dateKey) {
+    if (r.type !== 'monthly') return false;
+    const mc = r.monthlyConfig || {};
+    if (mc.mType !== 'none') return false;
+    const d = parseKey(dateKey);
+    const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+    const monthEnd   = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    const s = parseKey(r.startDate);
+    if (s > monthEnd) return false;
+    if (r.endDate && parseKey(r.endDate) < monthStart) return false;
+    return true;
+  }
+
+  function recurAppliesToDate(r, dateKey) {
+    const d = parseKey(dateKey);
+    const s = parseKey(r.startDate);
+    if (d < s) return false;
+    if (r.endDate) {
+      if (d > parseKey(r.endDate)) return false;
+    }
+    if (r.type === 'daily') return true;
+
+    if (r.type === 'weekly') {
+      if (r.noSpecificDay) return false;
+      const days = r.weekDays || [s.getDay()];
+      return days.includes(d.getDay());
+    }
+
+    if (r.type === 'monthly') {
+      const mc = r.monthlyConfig || { mType: 'date', day: s.getDate() };
+      if (mc.mType === 'none')    return false;
+      if (mc.mType === 'date')    return d.getDate() === mc.day;
+      if (mc.mType === 'weekday') return d.getDay() === mc.weekDay && getNthWeekdayOfMonth(d) === mc.weekNum;
+      if (mc.mType === 'lastday') return d.getDate() === lastDayOfMonth(d);
+    }
+    return false;
+  }
+
+  // ── Per-day stats ──
+  function getDayStats(key) {
+    let total = 0, done = 0;
+    (todos[key] || []).forEach(t => { total++; if (t.done) done++; });
+    recurring.filter(r => recurAppliesToDate(r, key)).forEach(r => {
+      total++;
+      if (r.doneByDate[key]) done++;
+    });
+    const weekKey = toWeekKey(key);
+    recurring.filter(r => recurWeekApplies(r, key)).forEach(r => {
+      total++;
+      if ((r.doneByWeek || {})[weekKey]) done++;
+    });
+    const monthKey = toMonthKey(key);
+    recurring.filter(r => recurMonthApplies(r, key)).forEach(r => {
+      total++;
+      if ((r.doneByMonth || {})[monthKey]) done++;
+    });
+    return { total, done };
+  }
+
+  function getWeekStats(refDateKey) {
+    const ref = parseKey(refDateKey);
+    const sunday = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - ref.getDay());
+    const wk = toWeekKey(refDateKey);
+    let total = 0, done = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + i);
+      const key = toKey(d.getFullYear(), d.getMonth(), d.getDate());
+      (todos[key] || []).forEach(t => { total++; if (t.done) done++; });
+      recurring.filter(r => recurAppliesToDate(r, key)).forEach(r => {
+        total++;
+        if (r.doneByDate[key]) done++;
+      });
+    }
+    // Week-wide tasks: count once for the whole week
+    const sundayKey = toKey(sunday.getFullYear(), sunday.getMonth(), sunday.getDate());
+    recurring.filter(r => recurWeekApplies(r, sundayKey)).forEach(r => {
+      total++;
+      if ((r.doneByWeek || {})[wk]) done++;
+    });
+    return { total, done };
+  }
+
+  function getMonthStats(y, m) {
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    let total = 0, done = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = toKey(y, m, d);
+      (todos[key] || []).forEach(t => { total++; if (t.done) done++; });
+      recurring.filter(r => recurAppliesToDate(r, key)).forEach(r => {
+        total++;
+        if (r.doneByDate[key]) done++;
+      });
+    }
+    // Week-wide: count once per unique week in this month
+    const seenWeeks = new Set();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = toKey(y, m, d);
+      const wk = toWeekKey(key);
+      if (!seenWeeks.has(wk)) {
+        seenWeeks.add(wk);
+        recurring.filter(r => recurWeekApplies(r, key)).forEach(r => {
+          total++;
+          if ((r.doneByWeek || {})[wk]) done++;
+        });
+      }
+    }
+    // Month-wide: count once for the month
+    const firstKey = toKey(y, m, 1);
+    const monthKey = toMonthKey(firstKey);
+    recurring.filter(r => recurMonthApplies(r, firstKey)).forEach(r => {
+      total++;
+      if ((r.doneByMonth || {})[monthKey]) done++;
+    });
+    return { total, done };
+  }
+
+  function calcPerfectDays(y, m) {
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    let daysWithTasks = 0, perfectDays = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const { total, done } = getDayStats(toKey(y, m, d));
+      if (total > 0) { daysWithTasks++; if (done === total) perfectDays++; }
+    }
+    return { daysWithTasks, perfectDays };
+  }
+
+  function calcYearStats(y) {
+    let daysWithTasks = 0, perfectDays = 0;
+    for (let m = 0; m < 12; m++) {
+      const s = calcPerfectDays(y, m);
+      daysWithTasks += s.daysWithTasks;
+      perfectDays   += s.perfectDays;
+    }
+    return { daysWithTasks, perfectDays };
+  }
+
+  // ── SVG helpers ──
+  const NS = 'http://www.w3.org/2000/svg';
+  function statColor(pct) {
+    if (pct === 100) return '#27ae60';
+    if (pct >= 50)   return '#f5a623';
+    return '#4a90e2';
+  }
+  function makePieSvg(pct, color, size, r, sw) {
+    const circ = 2 * Math.PI * r;
+    const svg  = document.createElementNS(NS, 'svg');
+    svg.setAttribute('width', size); svg.setAttribute('height', size);
+    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+    const cx = size/2, cy = size/2;
+    const bg = document.createElementNS(NS, 'circle');
+    bg.setAttribute('cx',cx); bg.setAttribute('cy',cy); bg.setAttribute('r',r);
+    bg.setAttribute('fill','none'); bg.setAttribute('stroke','#e0e0e0'); bg.setAttribute('stroke-width',sw);
+    const arc = document.createElementNS(NS, 'circle');
+    arc.setAttribute('cx',cx); arc.setAttribute('cy',cy); arc.setAttribute('r',r);
+    arc.setAttribute('fill','none'); arc.setAttribute('stroke',color); arc.setAttribute('stroke-width',sw);
+    arc.setAttribute('stroke-linecap','round');
+    arc.setAttribute('stroke-dasharray', `${(pct/100)*circ} ${circ}`);
+    arc.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+    svg.appendChild(bg); svg.appendChild(arc);
+    return svg;
+  }
+
+  // ── Render ──
+  function renderCalendar() {
+    document.getElementById('viewToggle').textContent = calView === 'month' ? '年表示' : '月表示';
+    document.getElementById('pieRow').style.display   = calView === 'month' ? '' : 'none';
+    if (calView === 'month') {
+      document.getElementById('calTitle').textContent = `${currentYear}年 ${currentMonth+1}月`;
+      renderMonthView();
+      renderProgressGraphs();
+    } else {
+      document.getElementById('calTitle').textContent = `${currentYear}年`;
+      renderYearView();
+    }
+  }
+
+  function renderProgressGraphs() {
+    // ── Monthly graph ──
+    const { total: mTotal, done: mDone } = getMonthStats(currentYear, currentMonth);
+    const mPct   = mTotal > 0 ? Math.round(mDone / mTotal * 100) : null;
+    const mColor = mPct !== null ? statColor(mPct) : '#ccc';
+    const monthSvgEl = document.getElementById('monthGraphSvg');
+    monthSvgEl.innerHTML = '';
+    monthSvgEl.appendChild(makePieSvg(mPct ?? 0, mColor, 52, 20, 6));
+    const monthPctEl = document.getElementById('monthGraphPct');
+    monthPctEl.textContent = mPct !== null ? `${mPct}%` : '—';
+    monthPctEl.style.color = mColor;
+    document.getElementById('monthGraphCount').textContent =
+      mTotal > 0 ? `${mDone}/${mTotal}件 完了` : 'タスクなし';
+
+    // ── Active state ──
+    document.getElementById('monthGraphItem').classList.toggle('pg-active', progressView === 'month');
+  }
+
+  const DAY_LABELS = ['日','月','火','水','木','金','土'];
+
+  function renderMonthView() {
+    const grid = document.getElementById('calGrid');
+    grid.className = 'cal-grid';
+    grid.innerHTML = '';
+
+    // Header row: 7 day labels + empty header for week-pie column
+    DAY_LABELS.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'cal-day-label';
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+    grid.appendChild(document.createElement('div')); // 8th header cell
+
+    const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+    const today       = new Date();
+
+    // Adds a week-pie cell for the week containing refKey
+    const addWeekPie = (refKey) => {
+      const wk = toWeekKey(refKey);
+      const { total, done } = getWeekStats(refKey);
+      const pct   = total > 0 ? Math.round(done / total * 100) : null;
+      const color = pct !== null ? statColor(pct) : '#ccc';
+      const isActive = progressView === 'week' && progressWeekRef === wk;
+      const cell = document.createElement('div');
+      cell.className = 'week-pie-cell' + (isActive ? ' pg-active' : '');
+      cell.appendChild(makePieSvg(pct ?? 0, pct !== null ? color : '#e0e0e0', 28, 10, 3));
+      if (pct !== null) {
+        const lbl = document.createElement('div');
+        lbl.className = 'week-pie-pct';
+        lbl.textContent = `${pct}%`;
+        lbl.style.color = color;
+        cell.appendChild(lbl);
+      }
+      cell.addEventListener('click', () => {
+        if (progressView === 'week' && progressWeekRef === wk) {
+          progressView = null;
+          progressWeekRef = null;
+          closeSheet();
+        } else {
+          progressView = 'week';
+          progressWeekRef = wk;
+          openSheet();
+        }
+        renderCalendar();
+      });
+      grid.appendChild(cell);
+    };
+
+    // Empty cells before month start
+    for (let i = 0; i < firstDay; i++) {
+      const el = document.createElement('div');
+      el.className = 'cal-day empty';
+      grid.appendChild(el);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = toKey(currentYear, currentMonth, d);
+      const el  = document.createElement('div');
+      el.className = 'cal-day';
+      const numEl = document.createElement('div');
+      numEl.className = 'day-num';
+      numEl.textContent = d;
+      el.appendChild(numEl);
+      if (today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d)
+        el.classList.add('today');
+      if (selectedDate === key) el.classList.add('selected');
+      const { total, done } = getDayStats(key);
+      if (total > 0) {
+        const pct   = Math.round(done/total*100);
+        const color = statColor(pct);
+        const stat  = document.createElement('div');
+        stat.className = 'day-stat';
+        stat.appendChild(makePieSvg(pct, color, 20, 7, 2.5));
+        const pctLbl = document.createElement('div');
+        pctLbl.className = 'day-stat-pct';
+        pctLbl.textContent = `${pct}%`;
+        pctLbl.style.color = color;
+        stat.appendChild(pctLbl);
+        el.appendChild(stat);
+      }
+      el.addEventListener('click', () => selectDate(key));
+      grid.appendChild(el);
+
+      const dayPos = (firstDay + d - 1) % 7;
+      if (dayPos === 6) {
+        // End of row (Saturday) — add week pie
+        addWeekPie(key);
+      } else if (d === daysInMonth) {
+        // Last day: fill remaining day cells then add week pie
+        for (let j = dayPos + 1; j < 7; j++) {
+          const empty = document.createElement('div');
+          empty.className = 'cal-day empty';
+          grid.appendChild(empty);
+        }
+        addWeekPie(key);
+      }
+    }
+  }
+
+  function renderYearView() {
+    const grid = document.getElementById('calGrid');
+    grid.className = '';
+    grid.innerHTML = '';
+
+    // ── Year summary ──
+    let yearTotal = 0, yearDone = 0;
+    for (let m = 0; m < 12; m++) {
+      const { total, done } = getMonthStats(currentYear, m);
+      yearTotal += total; yearDone += done;
+    }
+    const yearSummary = document.createElement('div');
+    yearSummary.className = 'year-summary';
+    if (yearTotal === 0) {
+      yearSummary.innerHTML = `
+        <div style="color:#ccc;font-size:.85rem;">この年にタスクのある日はありません</div>`;
+    } else {
+      const pct   = Math.round(yearDone / yearTotal * 100);
+      const color = statColor(pct);
+      yearSummary.appendChild(makePieSvg(pct, color, 56, 22, 7));
+      const info = document.createElement('div');
+      info.className = 'pie-info';
+      info.innerHTML = `
+        <span class="pie-pct" style="color:${color}">${pct}%</span>
+        <span class="pie-sub">${currentYear}年 年間完了率</span>
+        <span class="pie-detail">${yearDone} / ${yearTotal}件 完了</span>`;
+      yearSummary.appendChild(info);
+    }
+    grid.appendChild(yearSummary);
+
+    // ── Month grid ──
+    const monthGrid = document.createElement('div');
+    monthGrid.className = 'year-month-grid';
+    const today = new Date();
+    for (let m = 0; m < 12; m++) {
+      const { total: mTotal, done: mDone } = getMonthStats(currentYear, m);
+      const hasTasks = mTotal > 0;
+      const pct      = hasTasks ? Math.round(mDone/mTotal*100) : null;
+      const color    = pct !== null ? statColor(pct) : '#ccc';
+      const card = document.createElement('div');
+      card.className = 'month-card';
+      if (today.getFullYear()===currentYear && today.getMonth()===m) card.classList.add('current-month');
+      const title = document.createElement('div');
+      title.className = 'month-card-title';
+      title.textContent = `${m+1}月`;
+      card.appendChild(title);
+      card.appendChild(makePieSvg(pct??0, color, 36, 14, 4));
+      const pctEl = document.createElement('div');
+      pctEl.className = 'month-card-pct';
+      pctEl.style.color = color;
+      pctEl.textContent = pct !== null ? `${pct}%` : '—';
+      const det = document.createElement('div');
+      det.className = 'month-card-detail';
+      det.textContent = hasTasks ? `${mDone}/${mTotal}件` : 'タスクなし';
+      card.appendChild(pctEl);
+      card.appendChild(det);
+      card.addEventListener('click', () => {
+        currentMonth = m; calView = 'month'; renderCalendar();
+      });
+      monthGrid.appendChild(card);
+    }
+    grid.appendChild(monthGrid);
+  }
+
+  function selectDate(key) {
+    selectedDate = key;
+    progressView = null;
+    progressWeekRef = null;
+    renderCalendar();
+    openSheet();
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    closeSheet();
+    if (calView === 'month') { if (--currentMonth < 0)  { currentMonth = 11; currentYear--; } }
+    else currentYear--;
+    progressView = null; progressWeekRef = null;
+    renderCalendar();
+    renderTodos();
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    closeSheet();
+    if (calView === 'month') { if (++currentMonth > 11) { currentMonth = 0;  currentYear++; } }
+    else currentYear++;
+    progressView = null; progressWeekRef = null;
+    renderCalendar();
+    renderTodos();
+  });
+  document.getElementById('viewToggle').addEventListener('click', () => {
+    closeSheet();
+    calView = calView === 'month' ? 'year' : 'month';
+    renderCalendar();
+  });
+
+  // ── Recurring form: show/hide extra fields ──
+  document.getElementById('recurType').addEventListener('change', function () {
+    document.getElementById('weekDaysRow').style.display      = this.value === 'weekly'  ? '' : 'none';
+    document.getElementById('monthlyOptionsRow').style.display = this.value === 'monthly' ? '' : 'none';
+  });
+
+  document.querySelectorAll('input[name="weeklyType"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('weekDayPicker').style.display = this.value === 'specific' ? '' : 'none';
+    });
+  });
+
+  document.querySelectorAll('.wd-btn').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('active'));
+  });
+
+  // Auto-select start date's weekday when start date changes and type is weekly
+  document.getElementById('recurStart').addEventListener('change', function () {
+    if (this.value) {
+      // auto select weekday
+      if (document.getElementById('recurType').value === 'weekly') {
+        const dow = parseKey(this.value).getDay();
+        document.querySelectorAll('.wd-btn').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.day) === dow);
+        });
+      }
+      // auto fill monthly date
+      if (document.getElementById('recurType').value === 'monthly') {
+        document.getElementById('monthDay').value = parseKey(this.value).getDate();
+      }
+    }
+  });
+
+  // ── Recurring Task Manager ──
+  function scheduleLabel(r) {
+    if (r.type === 'daily') return '毎日';
+    if (r.type === 'weekly') {
+      if (r.noSpecificDay) return '毎週';
+      const days = (r.weekDays || [parseKey(r.startDate).getDay()]).map(d => WD_NAMES[d]).join('・');
+      return `毎週 ${days}`;
+    }
+    if (r.type === 'monthly') {
+      const mc = r.monthlyConfig || { mType: 'date', day: parseKey(r.startDate).getDate() };
+      if (mc.mType === 'none')    return '毎月';
+      if (mc.mType === 'date')    return `毎月 ${mc.day}日`;
+      if (mc.mType === 'weekday') return `毎月 第${mc.weekNum}${WD_NAMES[mc.weekDay]}曜日`;
+      if (mc.mType === 'lastday') return '毎月末日';
+    }
+    return '';
+  }
+
+  function addRecurring() {
+    const text  = document.getElementById('recurText').value.trim();
+    const type  = document.getElementById('recurType').value;
+    const start = document.getElementById('recurStart').value;
+    const end   = document.getElementById('recurEnd').value;
+    if (!text || !start) { alert('タスク名と開始日を入力してください'); return; }
+    if (end && start > end) { alert('終了日は開始日以降にしてください'); return; }
+
+    let weekDays = null;
+    let monthlyConfig = null;
+    let noSpecificDay = false;
+
+    if (type === 'weekly') {
+      const weeklyType = document.querySelector('input[name="weeklyType"]:checked').value;
+      if (weeklyType === 'specific') {
+        weekDays = Array.from(document.querySelectorAll('.wd-btn.active')).map(b => parseInt(b.dataset.day));
+        if (weekDays.length === 0) { alert('曜日を1つ以上選択してください'); return; }
+      } else {
+        noSpecificDay = true;
+      }
+    }
+    if (type === 'monthly') {
+      const mType = document.querySelector('input[name="monthlyType"]:checked').value;
+      if (mType === 'date') {
+        monthlyConfig = { mType: 'date', day: parseInt(document.getElementById('monthDay').value) };
+      } else if (mType === 'weekday') {
+        monthlyConfig = {
+          mType: 'weekday',
+          weekNum: parseInt(document.getElementById('monthWeekNum').value),
+          weekDay: parseInt(document.getElementById('monthWeekDay').value)
+        };
+      } else if (mType === 'lastday') {
+        monthlyConfig = { mType: 'lastday' };
+      } else {
+        monthlyConfig = { mType: 'none' };
+      }
+    }
+
+    recurring.push({ id: nextId++, text, type, startDate: start, endDate: end||null, weekDays, monthlyConfig, noSpecificDay, doneByDate: {}, doneByWeek: {}, doneByMonth: {} });
+    saveData();
+    document.getElementById('recurText').value  = '';
+    document.getElementById('recurStart').value = '';
+    document.getElementById('recurEnd').value   = '';
+    document.querySelectorAll('.wd-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('input[name="weeklyType"][value="specific"]').checked = true;
+    document.getElementById('weekDayPicker').style.display = '';
+    document.querySelector('input[name="monthlyType"][value="date"]').checked = true;
+
+    renderRecurringList();
+    renderCalendar();
+    renderTodos();
+  }
+
+  function deleteRecurring(id) {
+    const idx = recurring.findIndex(r => r.id === id);
+    if (idx !== -1) recurring.splice(idx, 1);
+    saveData();
+    renderRecurringList();
+    renderCalendar();
+    renderTodos();
+  }
+
+  const TYPE_LABEL = { daily: '毎日', weekly: '毎週', monthly: '毎月' };
+
+  function renderRecurringList() {
+    const ul = document.getElementById('recurList');
+    ul.innerHTML = '';
+    if (recurring.length === 0) {
+      ul.innerHTML = '<li style="color:#ccc;font-size:.85rem;padding:8px 0;">繰り返しタスクなし</li>';
+      return;
+    }
+    recurring.forEach(r => {
+      const endLabel = r.endDate ? r.endDate : '無期限';
+      const li = document.createElement('li');
+      li.className = 'recur-item';
+      li.innerHTML = `
+        <span class="badge ${r.type}">${scheduleLabel(r)}</span>
+        <span class="ri-text">
+          ${r.text}
+          <br><span class="ri-meta">${r.startDate} 〜 ${endLabel}</span>
+        </span>
+        <button class="delete-btn">削除</button>
+      `;
+      li.querySelector('.delete-btn').addEventListener('click', () => deleteRecurring(r.id));
+      ul.appendChild(li);
+    });
+  }
+
+  function makeRecurLi(r, done, onChange) {
+    const li = document.createElement('li');
+    li.className = 'task-item' + (done ? ' done' : '');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox'; checkbox.checked = done;
+    checkbox.addEventListener('change', onChange);
+    const badge = document.createElement('span');
+    badge.className = `badge ${r.type}`;
+    badge.textContent = scheduleLabel(r);
+    const span = document.createElement('span');
+    span.className = 'task-text'; span.textContent = r.text;
+    li.appendChild(checkbox); li.appendChild(badge); li.appendChild(span);
+    return li;
+  }
+
+  // ── Todo Panel ──
+  function renderTodos() {
+    const label     = document.getElementById('selectedDateLabel');
+    const recurSec  = document.getElementById('recurTaskSection');
+    const weekSec   = document.getElementById('weekTaskSection');
+    const monthSec  = document.getElementById('monthTaskSection');
+    const onceSec   = document.getElementById('onceTaskSection');
+    recurSec.innerHTML  = '';
+    weekSec.innerHTML   = '';
+    monthSec.innerHTML  = '';
+    onceSec.innerHTML   = '';
+
+    // ── 週次グラフモード ──
+    if (progressView === 'week' && progressWeekRef) {
+      const wk       = progressWeekRef;
+      const sunday   = parseKey(wk);
+      const saturday = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + 6);
+      label.textContent =
+        `${sunday.getMonth()+1}/${sunday.getDate()} 〜 ${saturday.getMonth()+1}/${saturday.getDate()}`;
+      const weekRecur   = recurring.filter(r => recurWeekApplies(r, wk));
+      const monthRecur  = recurring.filter(r => recurMonthApplies(r, wk));
+      const mKeyForWeek = toMonthKey(wk);
+      if (weekRecur.length === 0 && monthRecur.length === 0) {
+        recurSec.innerHTML = '<div class="empty-msg">この週に紐づくタスクはありません</div>';
+        return;
+      }
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      weekRecur.forEach(r => {
+        if (!r.doneByWeek) r.doneByWeek = {};
+        const done = r.doneByWeek[wk] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByWeek[wk] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      monthRecur.forEach(r => {
+        if (!r.doneByMonth) r.doneByMonth = {};
+        const done = r.doneByMonth[mKeyForWeek] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByMonth[mKeyForWeek] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      recurSec.appendChild(ul);
+      return;
+    }
+
+    // ── 月次グラフモード ──
+    if (progressView === 'month') {
+      const displayedMonthKey = toMonthKey(toKey(currentYear, currentMonth, 1));
+      label.textContent = `${currentYear}年${currentMonth+1}月`;
+      const firstKey   = toKey(currentYear, currentMonth, 1);
+      const monthRecur = recurring.filter(r => recurMonthApplies(r, firstKey));
+      if (monthRecur.length === 0) {
+        recurSec.innerHTML = '<div class="empty-msg">この月に紐づく月次タスクはありません</div>';
+        return;
+      }
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      monthRecur.forEach(r => {
+        if (!r.doneByMonth) r.doneByMonth = {};
+        const done = r.doneByMonth[displayedMonthKey] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByMonth[displayedMonthKey] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      recurSec.appendChild(ul);
+      return;
+    }
+
+    // ── 日付選択モード ──
+    if (!selectedDate) { label.textContent = '日付を選択してください'; return; }
+    const [y,m,d] = selectedDate.split('-');
+    label.textContent = `${y}年${parseInt(m)}月${parseInt(d)}日のタスク`;
+
+    // Day-specific recurring tasks
+    const applicableRecur = recurring.filter(r => recurAppliesToDate(r, selectedDate));
+    if (applicableRecur.length > 0) {
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      applicableRecur.forEach(r => {
+        const done = r.doneByDate[selectedDate] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByDate[selectedDate] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      recurSec.appendChild(ul);
+    }
+
+    // Week-wide recurring tasks
+    const weekKey = toWeekKey(selectedDate);
+    const applicableWeek = recurring.filter(r => recurWeekApplies(r, selectedDate));
+    if (applicableWeek.length > 0) {
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      applicableWeek.forEach(r => {
+        if (!r.doneByWeek) r.doneByWeek = {};
+        const done = r.doneByWeek[weekKey] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByWeek[weekKey] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      weekSec.appendChild(ul);
+    }
+
+    // Month-wide recurring tasks
+    const monthKey = toMonthKey(selectedDate);
+    const applicableMonth = recurring.filter(r => recurMonthApplies(r, selectedDate));
+    if (applicableMonth.length > 0) {
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      applicableMonth.forEach(r => {
+        if (!r.doneByMonth) r.doneByMonth = {};
+        const done = r.doneByMonth[monthKey] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByMonth[monthKey] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      monthSec.appendChild(ul);
+    }
+
+    const items = todos[selectedDate] || [];
+    const sec2  = document.createElement('div');
+    if (items.length > 0) {
+      const ul2 = document.createElement('ul');
+      ul2.className = 'task-list';
+      items.forEach((item, idx) => {
+        const li = document.createElement('li');
+        li.className = 'task-item' + (item.done ? ' done' : '');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox'; checkbox.checked = item.done;
+        checkbox.addEventListener('change', () => {
+          item.done = checkbox.checked;
+          saveData();
+          li.classList.toggle('done', item.done);
+          renderCalendar();
+        });
+        const span = document.createElement('span');
+        span.className = 'task-text'; span.textContent = item.text;
+        const del = document.createElement('button');
+        del.textContent = '削除'; del.className = 'delete-btn';
+        del.onclick = () => { items.splice(idx, 1); saveData(); renderTodos(); renderCalendar(); };
+        li.appendChild(checkbox); li.appendChild(span); li.appendChild(del);
+        ul2.appendChild(li);
+      });
+      sec2.appendChild(ul2);
+    }
+    onceSec.appendChild(sec2);
+  }
+
+  function addTodo() {
+    if (!selectedDate) return;
+    const text = todoInput.value.trim();
+    if (!text) return;
+    if (!todos[selectedDate]) todos[selectedDate] = [];
+    todos[selectedDate].push({ text, done: false });
+    saveData();
+    todoInput.value = '';
+    todoInput.focus();
+    renderTodos();
+    renderCalendar();
+  }
+
+  // ── Progress graph tap handlers ──
+  document.getElementById('monthGraphItem').addEventListener('click', () => {
+    if (progressView === 'month') {
+      progressView = null;
+      closeSheet();
+    } else {
+      progressView = 'month';
+      progressWeekRef = null;
+      openSheet();
+    }
+    renderCalendar();
+  });
+
+  // ── Nav / sheet close handlers ──
+  document.getElementById('navHome').addEventListener('click', () => showPage('home'));
+  document.getElementById('navAdd').addEventListener('click', () => showPage('add'));
+  document.getElementById('navInfo').addEventListener('click', () => { window.location.href = 'info.html'; });
+  document.getElementById('sheetCloseBtn').addEventListener('click', closeSheet);
+  document.getElementById('sheetOverlay').addEventListener('click', closeSheet);
+
+  // ── Init ──
+  loadData();
+  const now    = new Date();
+  currentYear  = now.getFullYear();
+  currentMonth = now.getMonth();
+  selectedDate = toKey(currentYear, currentMonth, now.getDate());
+  document.getElementById('recurStart').value = selectedDate;
+
+  renderRecurringList();
+  renderCalendar();
+  renderTodos();
+
+  // Service Worker 登録
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.error('SW登録失敗:', err));
+  }
+</script>
+</body>
+</html>

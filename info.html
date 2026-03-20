@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FQBMWBL134"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-FQBMWBL134');
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4491116730564800"
+       crossorigin="anonymous"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Info - Todoアプリ</title>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Todoアプリ">
+  <meta property="og:title" content="Todoアプリ｜ルーティンタスクをシンプルに管理">
+  <meta property="og:description" content="毎日・毎週・毎月の習慣をカレンダーで見える化。勉強・運動・健康管理などのセルフマネジメントにぴったりの無料タスク管理アプリです。">
+  <meta property="og:url" content="https://todo-app-one-peach-53.vercel.app">
+  <meta property="og:image" content="https://todo-app-one-peach-53.vercel.app/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Todoアプリ｜ルーティンタスクをシンプルに管理">
+  <meta name="twitter:description" content="毎日・毎週・毎月の習慣をカレンダーで見える化。勉強・運動・健康管理などのセルフマネジメントにぴったりの無料タスク管理アプリです。">
+  <meta name="twitter:image" content="https://todo-app-one-peach-53.vercel.app/og-image.png">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      background: #eef2f9;
+      min-height: 100vh;
+      color: #1e2a3a;
+    }
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: linear-gradient(135deg, #5a9de8 0%, #2c6db5 100%);
+      color: white;
+      padding: 18px 20px 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      box-shadow: 0 2px 10px rgba(44,109,181,0.28);
+    }
+
+    /* ── View ── */
+    .view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px 14px 80px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 2px 14px rgba(74,144,226,0.10);
+      overflow: hidden;
+    }
+
+    /* ── Menu list ── */
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid #f0f4fa;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:active { background: #f0f6ff; }
+    .menu-icon {
+      font-size: 1.3rem;
+      width: 36px;
+      height: 36px;
+      background: #eef2f9;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .menu-body { flex: 1; }
+    .menu-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #2c3e50;
+      line-height: 1.4;
+    }
+    .menu-sub {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    .menu-arrow {
+      font-size: 1rem;
+      color: #b8ccec;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Toggle switch ── */
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #cdd5e0;
+      border-radius: 13px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #4a90e2; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+    /* ── Footer ── */
+    .cal-footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      padding: 6px 0 8px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Bottom navigation ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      display: flex; background: white; border-top: 1px solid #e8eef8;
+      z-index: 100; height: 58px;
+    }
+    .nav-item {
+      flex: 1; background: none; border: none; padding: 8px 0 6px;
+      font-size: 0.82rem; font-weight: 600; color: #94a3b8;
+      cursor: pointer; border-radius: 0; font-family: inherit;
+      text-decoration: none; display: flex; align-items: center; justify-content: center;
+    }
+    .nav-item:active { background: #f5f8fd; }
+    .nav-item.active { color: #4a90e2; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+
+  <div class="app-header">Info</div>
+
+  <div class="view">
+
+    <div class="card">
+
+      <a class="menu-item" href="about.html">
+        <div class="menu-icon">📱</div>
+        <div class="menu-body">
+          <div class="menu-title">このアプリについて</div>
+          <div class="menu-sub">機能紹介・使い方</div>
+        </div>
+        <div class="menu-arrow">＞</div>
+      </a>
+
+      <a class="menu-item" href="privacy.html">
+        <div class="menu-icon">🔒</div>
+        <div class="menu-body">
+          <div class="menu-title">プライバシーポリシー</div>
+          <div class="menu-sub">情報の取り扱いについて</div>
+        </div>
+        <div class="menu-arrow">＞</div>
+      </a>
+
+      <a class="menu-item" href="mailto:maokawai.asanoha@gmail.com">
+        <div class="menu-icon">✉️</div>
+        <div class="menu-body">
+          <div class="menu-title">お問い合わせ</div>
+          <div class="menu-sub">maokawai.asanoha@gmail.com</div>
+        </div>
+        <div class="menu-arrow">＞</div>
+      </a>
+
+      <div class="menu-item">
+        <div class="menu-icon">🔔</div>
+        <div class="menu-body">
+          <div class="menu-title">プッシュ通知設定</div>
+          <div class="menu-sub">7:00 / 12:00 / 20:00 に通知</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="notifyToggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+    </div>
+
+    <div class="cal-footer">©asanoha inc. 2026</div>
+
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a class="nav-item" href="index.html">🏠 ホーム</a>
+    <a class="nav-item" href="index.html">➕ タスク追加</a>
+    <a class="nav-item active" href="info.html">ℹ️ Info</a>
+  </nav>
+
+</div>
+
+<script>
+  const NOTIFY_KEY = 'todo-app-notify';
+
+  async function sendNotifyMessage(type) {
+    if (!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.active) reg.active.postMessage({ type });
+  }
+
+  async function initToggle() {
+    const saved = localStorage.getItem(NOTIFY_KEY) === 'true';
+    document.getElementById('notifyToggle').checked = saved;
+    if (saved) await sendNotifyMessage('NOTIFY_ON');
+  }
+
+  document.getElementById('notifyToggle').addEventListener('change', async function () {
+    if (this.checked) {
+      if (!('Notification' in window)) {
+        alert('このブラウザはプッシュ通知に対応していません。');
+        this.checked = false;
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        this.checked = false;
+        alert('通知の許可が必要です。ブラウザの設定から通知を許可してください。');
+        return;
+      }
+      localStorage.setItem(NOTIFY_KEY, 'true');
+      await sendNotifyMessage('NOTIFY_ON');
+    } else {
+      localStorage.setItem(NOTIFY_KEY, 'false');
+      await sendNotifyMessage('NOTIFY_OFF');
+    }
+  });
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(() => initToggle());
+  }
+</script>
+</body>
+</html>
