@@ -493,7 +493,6 @@
           </div>
         </div>
       </div>
-      <div class="progress-task-panel" id="progressTaskPanel" style="display:none"></div>
       <div id="calGrid"></div>
     </div>
 
@@ -832,7 +831,6 @@
       renderMonthView();
       renderProgressGraphs();
     } else {
-      document.getElementById('progressTaskPanel').style.display = 'none';
       document.getElementById('calTitle').textContent = `${currentYear}年`;
       renderYearView();
     }
@@ -854,99 +852,6 @@
 
     // ── Active state ──
     document.getElementById('monthGraphItem').classList.toggle('pg-active', progressView === 'month');
-
-    renderProgressTaskPanel();
-  }
-
-  function renderProgressTaskPanel() {
-    const panel = document.getElementById('progressTaskPanel');
-    if (!progressView) { panel.style.display = 'none'; return; }
-    panel.style.display = '';
-    panel.innerHTML = '';
-
-    if (progressView === 'week') {
-      const wk = progressWeekRef;
-      if (!wk) { panel.style.display = 'none'; return; }
-      const sunday   = parseKey(wk);
-      const saturday = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + 6);
-      const title = document.createElement('div');
-      title.className = 'progress-panel-title';
-      title.textContent =
-        `${sunday.getMonth()+1}/${sunday.getDate()} 〜 ${saturday.getMonth()+1}/${saturday.getDate()}`;
-      panel.appendChild(title);
-
-      const weekRecur  = recurring.filter(r => recurWeekApplies(r, wk));
-      const monthRecur = recurring.filter(r => recurMonthApplies(r, wk));
-      const mKeyForWeek = toMonthKey(wk);
-
-      if (weekRecur.length === 0 && monthRecur.length === 0) {
-        const e = document.createElement('div');
-        e.className = 'empty-msg';
-        e.textContent = 'この週に紐づくタスクはありません';
-        panel.appendChild(e);
-        return;
-      }
-      const ul = document.createElement('ul');
-      ul.className = 'task-list';
-      weekRecur.forEach(r => {
-        if (!r.doneByWeek) r.doneByWeek = {};
-        const done = r.doneByWeek[wk] || false;
-        const li = makeRecurLi(r, done, (e) => {
-          r.doneByWeek[wk] = e.target.checked;
-          saveData();
-          li.classList.toggle('done', e.target.checked);
-          renderCalendar();
-          renderTodos();
-        });
-        ul.appendChild(li);
-      });
-      monthRecur.forEach(r => {
-        if (!r.doneByMonth) r.doneByMonth = {};
-        const done = r.doneByMonth[mKeyForWeek] || false;
-        const li = makeRecurLi(r, done, (e) => {
-          r.doneByMonth[mKeyForWeek] = e.target.checked;
-          saveData();
-          li.classList.toggle('done', e.target.checked);
-          renderCalendar();
-          renderTodos();
-        });
-        ul.appendChild(li);
-      });
-      panel.appendChild(ul);
-
-    } else if (progressView === 'month') {
-      const displayedMonthKey = toMonthKey(toKey(currentYear, currentMonth, 1));
-      const title = document.createElement('div');
-      title.className = 'progress-panel-title';
-      title.textContent = `${currentYear}年${currentMonth+1}月 月次タスク`;
-      panel.appendChild(title);
-
-      const firstKey   = toKey(currentYear, currentMonth, 1);
-      const monthRecur = recurring.filter(r => recurMonthApplies(r, firstKey));
-
-      if (monthRecur.length === 0) {
-        const e = document.createElement('div');
-        e.className = 'empty-msg';
-        e.textContent = 'この月に紐づく月次タスクはありません';
-        panel.appendChild(e);
-        return;
-      }
-      const ul = document.createElement('ul');
-      ul.className = 'task-list';
-      monthRecur.forEach(r => {
-        if (!r.doneByMonth) r.doneByMonth = {};
-        const done = r.doneByMonth[displayedMonthKey] || false;
-        const li = makeRecurLi(r, done, (e) => {
-          r.doneByMonth[displayedMonthKey] = e.target.checked;
-          saveData();
-          li.classList.toggle('done', e.target.checked);
-          renderCalendar();
-          renderTodos();
-        });
-        ul.appendChild(li);
-      });
-      panel.appendChild(ul);
-    }
   }
 
   const DAY_LABELS = ['日','月','火','水','木','金','土'];
@@ -995,6 +900,7 @@
           progressWeekRef = wk;
         }
         renderCalendar();
+        renderTodos();
       });
       grid.appendChild(cell);
     };
@@ -1112,6 +1018,8 @@
 
   function selectDate(key) {
     selectedDate = key;
+    progressView = null;
+    progressWeekRef = null;
     renderCalendar();
     renderTodos();
   }
@@ -1121,12 +1029,14 @@
     else currentYear--;
     progressView = null; progressWeekRef = null;
     renderCalendar();
+    renderTodos();
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
     if (calView === 'month') { if (++currentMonth > 11) { currentMonth = 0;  currentYear++; } }
     else currentYear++;
     progressView = null; progressWeekRef = null;
     renderCalendar();
+    renderTodos();
   });
   document.getElementById('viewToggle').addEventListener('click', () => {
     calView = calView === 'month' ? 'year' : 'month';
@@ -1298,6 +1208,77 @@
     weekSec.innerHTML   = '';
     monthSec.innerHTML  = '';
     onceSec.innerHTML   = '';
+
+    // ── 週次グラフモード ──
+    if (progressView === 'week' && progressWeekRef) {
+      const wk       = progressWeekRef;
+      const sunday   = parseKey(wk);
+      const saturday = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + 6);
+      label.textContent =
+        `${sunday.getMonth()+1}/${sunday.getDate()} 〜 ${saturday.getMonth()+1}/${saturday.getDate()}`;
+      const weekRecur   = recurring.filter(r => recurWeekApplies(r, wk));
+      const monthRecur  = recurring.filter(r => recurMonthApplies(r, wk));
+      const mKeyForWeek = toMonthKey(wk);
+      if (weekRecur.length === 0 && monthRecur.length === 0) {
+        recurSec.innerHTML = '<div class="empty-msg">この週に紐づくタスクはありません</div>';
+        return;
+      }
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      weekRecur.forEach(r => {
+        if (!r.doneByWeek) r.doneByWeek = {};
+        const done = r.doneByWeek[wk] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByWeek[wk] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      monthRecur.forEach(r => {
+        if (!r.doneByMonth) r.doneByMonth = {};
+        const done = r.doneByMonth[mKeyForWeek] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByMonth[mKeyForWeek] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      recurSec.appendChild(ul);
+      return;
+    }
+
+    // ── 月次グラフモード ──
+    if (progressView === 'month') {
+      const displayedMonthKey = toMonthKey(toKey(currentYear, currentMonth, 1));
+      label.textContent = `${currentYear}年${currentMonth+1}月`;
+      const firstKey   = toKey(currentYear, currentMonth, 1);
+      const monthRecur = recurring.filter(r => recurMonthApplies(r, firstKey));
+      if (monthRecur.length === 0) {
+        recurSec.innerHTML = '<div class="empty-msg">この月に紐づく月次タスクはありません</div>';
+        return;
+      }
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      monthRecur.forEach(r => {
+        if (!r.doneByMonth) r.doneByMonth = {};
+        const done = r.doneByMonth[displayedMonthKey] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByMonth[displayedMonthKey] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      recurSec.appendChild(ul);
+      return;
+    }
+
+    // ── 日付選択モード ──
     if (!selectedDate) { label.textContent = '日付を選択してください'; return; }
     const [y,m,d] = selectedDate.split('-');
     label.textContent = `${y}年${parseInt(m)}月${parseInt(d)}日`;
@@ -1407,6 +1388,7 @@
     progressView = progressView === 'month' ? null : 'month';
     if (progressView === 'month') progressWeekRef = null;
     renderCalendar();
+    renderTodos();
   });
 
   // ── Init ──
