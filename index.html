@@ -43,7 +43,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: 16px 14px 44px;
+      padding: 16px 14px 80px;
     }
 
     /* ── Cards ── */
@@ -466,6 +466,55 @@
       padding: 6px 0 8px;
       letter-spacing: 0.03em;
     }
+
+    /* ── Pages ── */
+    .page { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+
+    /* ── Sheet overlay ── */
+    .sheet-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.42);
+      z-index: 50; opacity: 0; transition: opacity 0.25s; pointer-events: none;
+    }
+    .sheet-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    /* ── Bottom sheet ── */
+    .bottom-sheet {
+      position: fixed; bottom: 58px; left: 50%; max-width: 480px; width: 100%;
+      transform: translateX(-50%) translateY(110%);
+      background: white; border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 30px rgba(44,109,181,0.20);
+      z-index: 60; transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      max-height: 70vh; display: flex; flex-direction: column;
+    }
+    .bottom-sheet.open { transform: translateX(-50%) translateY(0); }
+    .sheet-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px 12px; border-bottom: 1px solid #eef2f9; flex-shrink: 0;
+    }
+    .sheet-head .selected-date-label { margin: 0; }
+    .sheet-close-btn {
+      background: #eef2f9; border: none; border-radius: 50%;
+      width: 32px; height: 32px; font-size: 1.2rem; line-height: 32px;
+      cursor: pointer; color: #94a3b8; flex-shrink: 0; padding: 0;
+      font-family: inherit;
+    }
+    .sheet-close-btn:active { background: #dce8f8; }
+    .sheet-body { padding: 4px 20px 20px; overflow-y: auto; flex: 1; }
+
+    /* ── Bottom navigation ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      display: flex; background: white; border-top: 1px solid #e8eef8;
+      z-index: 100; height: 58px;
+    }
+    .nav-item {
+      flex: 1; background: none; border: none; padding: 8px 0 6px;
+      font-size: 0.82rem; font-weight: 600; color: #94a3b8;
+      cursor: pointer; border-radius: 0; font-family: inherit;
+    }
+    .nav-item:active { background: #f5f8fd; }
+    .nav-item.active { color: #4a90e2; }
   </style>
 </head>
 <body>
@@ -473,128 +522,155 @@
 
   <div class="app-header">Todoアプリ</div>
 
-  <div class="view">
+  <!-- Page 1: Home (Calendar) -->
+  <div id="homePage" class="page">
+    <div class="view">
 
-    <!-- Calendar -->
-    <div class="card">
-      <div class="cal-header">
-        <button class="cal-nav" id="prevBtn">&#8249;</button>
-        <h2 id="calTitle"></h2>
-        <button class="cal-nav" id="nextBtn">&#8250;</button>
-        <button class="view-toggle" id="viewToggle">年表示</button>
-      </div>
-      <div class="pie-row" id="pieRow">
-        <div class="progress-graphs">
-          <div class="progress-graph-item" id="monthGraphItem">
-            <div id="monthGraphSvg"></div>
-            <div class="progress-graph-pct" id="monthGraphPct">—</div>
-            <div class="progress-graph-label">月次</div>
-            <div class="progress-graph-count" id="monthGraphCount">—</div>
+      <!-- Calendar -->
+      <div class="card">
+        <div class="cal-header">
+          <button class="cal-nav" id="prevBtn">&#8249;</button>
+          <h2 id="calTitle"></h2>
+          <button class="cal-nav" id="nextBtn">&#8250;</button>
+          <button class="view-toggle" id="viewToggle">年表示</button>
+        </div>
+        <div class="pie-row" id="pieRow">
+          <div class="progress-graphs">
+            <div class="progress-graph-item" id="monthGraphItem">
+              <div id="monthGraphSvg"></div>
+              <div class="progress-graph-pct" id="monthGraphPct">—</div>
+              <div class="progress-graph-label">月次</div>
+              <div class="progress-graph-count" id="monthGraphCount">—</div>
+            </div>
           </div>
         </div>
+        <div id="calGrid"></div>
       </div>
-      <div id="calGrid"></div>
-    </div>
 
-    <!-- Todo Panel -->
-    <div class="card">
+      <div class="cal-footer">©asanoha inc. 2026</div>
+
+    </div>
+  </div>
+
+  <!-- Page 2: Add Task -->
+  <div id="addPage" class="page" style="display:none">
+    <div class="view">
+
+      <!-- Recurring Task Manager -->
+      <div class="card">
+        <h2>タスクの追加</h2>
+        <div class="form-grid">
+          <div class="form-row">
+            <label class="row-label">タスク名</label>
+            <input type="text" id="recurText" placeholder="例: 日報を書く" style="flex:1" />
+          </div>
+          <div class="form-row">
+            <label class="row-label">繰り返し</label>
+            <select id="recurType" style="flex:1">
+              <option value="daily">毎日</option>
+              <option value="weekly">毎週</option>
+              <option value="monthly">毎月</option>
+            </select>
+          </div>
+
+          <!-- Weekly: specific day or any day -->
+          <div class="form-row" id="weekDaysRow" style="display:none">
+            <label class="row-label">設定</label>
+            <div class="monthly-type-group">
+              <label class="radio-row">
+                <input type="radio" name="weeklyType" value="specific" checked> 特定の曜日に行う
+              </label>
+              <div class="weekday-picker" id="weekDayPicker">
+                <button type="button" class="wd-btn" data-day="0">日</button>
+                <button type="button" class="wd-btn" data-day="1">月</button>
+                <button type="button" class="wd-btn" data-day="2">火</button>
+                <button type="button" class="wd-btn" data-day="3">水</button>
+                <button type="button" class="wd-btn" data-day="4">木</button>
+                <button type="button" class="wd-btn" data-day="5">金</button>
+                <button type="button" class="wd-btn" data-day="6">土</button>
+              </div>
+              <label class="radio-row">
+                <input type="radio" name="weeklyType" value="any"> 週のうちいつでもよい
+              </label>
+            </div>
+          </div>
+
+          <!-- Monthly: type picker -->
+          <div class="form-row" id="monthlyOptionsRow" style="display:none">
+            <label class="row-label">種別</label>
+            <div class="monthly-type-group">
+              <label class="radio-row">
+                <input type="radio" name="monthlyType" value="date" checked>
+                毎月
+                <input type="number" id="monthDay" min="1" max="31" value="1">
+                日
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="monthlyType" value="weekday">
+                毎月 第
+                <select id="monthWeekNum">
+                  <option value="1">1</option><option value="2">2</option>
+                  <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+                <select id="monthWeekDay">
+                  <option value="0">日</option><option value="1">月</option><option value="2">火</option>
+                  <option value="3">水</option><option value="4">木</option><option value="5">金</option>
+                  <option value="6">土</option>
+                </select>
+                曜日
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="monthlyType" value="lastday">
+                毎月末日
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="monthlyType" value="none">
+                月のうちいつでもよい
+              </label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label class="row-label">開始日</label>
+            <input type="date" id="recurStart" />
+          </div>
+          <div class="form-row">
+            <label class="row-label">終了日 <span class="optional-hint">任意</span></label>
+            <input type="date" id="recurEnd" />
+          </div>
+          <button class="btn-add-recur" onclick="addRecurring()">繰り返しタスクを追加</button>
+        </div>
+        <ul class="recur-list" id="recurList"></ul>
+      </div>
+
+      <div class="cal-footer">©asanoha inc. 2026</div>
+
+    </div>
+  </div>
+
+  <!-- Sheet Overlay -->
+  <div id="sheetOverlay" class="sheet-overlay"></div>
+
+  <!-- Bottom Sheet: Task List -->
+  <div id="bottomSheet" class="bottom-sheet">
+    <div class="sheet-head">
       <div class="selected-date-label" id="selectedDateLabel">日付を選択してください</div>
+      <button class="sheet-close-btn" id="sheetCloseBtn">×</button>
+    </div>
+    <div class="sheet-body">
       <div id="recurTaskSection"></div>
       <div id="weekTaskSection"></div>
       <div id="monthTaskSection"></div>
       <div id="onceTaskSection"></div>
     </div>
-
-    <!-- Recurring Task Manager -->
-    <div class="card">
-      <h2>タスクの追加</h2>
-      <div class="form-grid">
-        <div class="form-row">
-          <label class="row-label">タスク名</label>
-          <input type="text" id="recurText" placeholder="例: 日報を書く" style="flex:1" />
-        </div>
-        <div class="form-row">
-          <label class="row-label">繰り返し</label>
-          <select id="recurType" style="flex:1">
-            <option value="daily">毎日</option>
-            <option value="weekly">毎週</option>
-            <option value="monthly">毎月</option>
-          </select>
-        </div>
-
-        <!-- Weekly: specific day or any day -->
-        <div class="form-row" id="weekDaysRow" style="display:none">
-          <label class="row-label">設定</label>
-          <div class="monthly-type-group">
-            <label class="radio-row">
-              <input type="radio" name="weeklyType" value="specific" checked> 特定の曜日に行う
-            </label>
-            <div class="weekday-picker" id="weekDayPicker">
-              <button type="button" class="wd-btn" data-day="0">日</button>
-              <button type="button" class="wd-btn" data-day="1">月</button>
-              <button type="button" class="wd-btn" data-day="2">火</button>
-              <button type="button" class="wd-btn" data-day="3">水</button>
-              <button type="button" class="wd-btn" data-day="4">木</button>
-              <button type="button" class="wd-btn" data-day="5">金</button>
-              <button type="button" class="wd-btn" data-day="6">土</button>
-            </div>
-            <label class="radio-row">
-              <input type="radio" name="weeklyType" value="any"> 週のうちいつでもよい
-            </label>
-          </div>
-        </div>
-
-        <!-- Monthly: type picker -->
-        <div class="form-row" id="monthlyOptionsRow" style="display:none">
-          <label class="row-label">種別</label>
-          <div class="monthly-type-group">
-            <label class="radio-row">
-              <input type="radio" name="monthlyType" value="date" checked>
-              毎月
-              <input type="number" id="monthDay" min="1" max="31" value="1">
-              日
-            </label>
-            <label class="radio-row">
-              <input type="radio" name="monthlyType" value="weekday">
-              毎月 第
-              <select id="monthWeekNum">
-                <option value="1">1</option><option value="2">2</option>
-                <option value="3">3</option><option value="4">4</option><option value="5">5</option>
-              </select>
-              <select id="monthWeekDay">
-                <option value="0">日</option><option value="1">月</option><option value="2">火</option>
-                <option value="3">水</option><option value="4">木</option><option value="5">金</option>
-                <option value="6">土</option>
-              </select>
-              曜日
-            </label>
-            <label class="radio-row">
-              <input type="radio" name="monthlyType" value="lastday">
-              毎月末日
-            </label>
-            <label class="radio-row">
-              <input type="radio" name="monthlyType" value="none">
-              月のうちいつでもよい
-            </label>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <label class="row-label">開始日</label>
-          <input type="date" id="recurStart" />
-        </div>
-        <div class="form-row">
-          <label class="row-label">終了日 <span class="optional-hint">任意</span></label>
-          <input type="date" id="recurEnd" />
-        </div>
-        <button class="btn-add-recur" onclick="addRecurring()">繰り返しタスクを追加</button>
-      </div>
-      <ul class="recur-list" id="recurList"></ul>
-    </div>
-
-    <div class="cal-footer">©asanoha inc. 2026</div>
-
   </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="navHome">🏠 ホーム</button>
+    <button class="nav-item" id="navAdd">➕ タスク追加</button>
+  </nav>
+
 </div>
 
 <script>
@@ -623,6 +699,27 @@
   let calView = 'month';
   let progressView = null;    // null | 'week' | 'month'
   let progressWeekRef = null; // Sunday date key of the tapped week pie
+  let currentPage = 'home';
+
+  function openSheet() {
+    renderTodos();
+    document.getElementById('sheetOverlay').classList.add('visible');
+    document.getElementById('bottomSheet').classList.add('open');
+  }
+
+  function closeSheet() {
+    document.getElementById('sheetOverlay').classList.remove('visible');
+    document.getElementById('bottomSheet').classList.remove('open');
+  }
+
+  function showPage(page) {
+    currentPage = page;
+    document.getElementById('homePage').style.display = page === 'home' ? '' : 'none';
+    document.getElementById('addPage').style.display  = page === 'add'  ? '' : 'none';
+    document.getElementById('navHome').classList.toggle('active', page === 'home');
+    document.getElementById('navAdd').classList.toggle('active', page === 'add');
+    if (page !== 'home') closeSheet();
+  }
 
   const WD_NAMES = ['日','月','火','水','木','金','土'];
 
@@ -899,12 +996,13 @@
         if (progressView === 'week' && progressWeekRef === wk) {
           progressView = null;
           progressWeekRef = null;
+          closeSheet();
         } else {
           progressView = 'week';
           progressWeekRef = wk;
+          openSheet();
         }
         renderCalendar();
-        renderTodos();
       });
       grid.appendChild(cell);
     };
@@ -1029,10 +1127,11 @@
     progressView = null;
     progressWeekRef = null;
     renderCalendar();
-    renderTodos();
+    openSheet();
   }
 
   document.getElementById('prevBtn').addEventListener('click', () => {
+    closeSheet();
     if (calView === 'month') { if (--currentMonth < 0)  { currentMonth = 11; currentYear--; } }
     else currentYear--;
     progressView = null; progressWeekRef = null;
@@ -1040,6 +1139,7 @@
     renderTodos();
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
+    closeSheet();
     if (calView === 'month') { if (++currentMonth > 11) { currentMonth = 0;  currentYear++; } }
     else currentYear++;
     progressView = null; progressWeekRef = null;
@@ -1047,6 +1147,7 @@
     renderTodos();
   });
   document.getElementById('viewToggle').addEventListener('click', () => {
+    closeSheet();
     calView = calView === 'month' ? 'year' : 'month';
     renderCalendar();
   });
@@ -1393,11 +1494,22 @@
 
   // ── Progress graph tap handlers ──
   document.getElementById('monthGraphItem').addEventListener('click', () => {
-    progressView = progressView === 'month' ? null : 'month';
-    if (progressView === 'month') progressWeekRef = null;
+    if (progressView === 'month') {
+      progressView = null;
+      closeSheet();
+    } else {
+      progressView = 'month';
+      progressWeekRef = null;
+      openSheet();
+    }
     renderCalendar();
-    renderTodos();
   });
+
+  // ── Nav / sheet close handlers ──
+  document.getElementById('navHome').addEventListener('click', () => showPage('home'));
+  document.getElementById('navAdd').addEventListener('click', () => showPage('add'));
+  document.getElementById('sheetCloseBtn').addEventListener('click', closeSheet);
+  document.getElementById('sheetOverlay').addEventListener('click', closeSheet);
 
   // ── Init ──
   loadData();
