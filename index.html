@@ -374,6 +374,73 @@
     .recur-item .ri-text { flex: 1; color: #2c3e50; line-height: 1.5; }
     .recur-item .ri-meta { font-size: 0.7rem; color: #94a3b8; }
 
+    /* ── Progress graphs ── */
+    .progress-graphs {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .progress-graph-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 10px 8px 8px;
+      border-radius: 14px;
+    }
+    .progress-graph-item:active { background: #eef2f9; }
+    .progress-graph-item.pg-active { background: #eef2f9; }
+    .progress-graph-pct {
+      font-size: 1.0rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-top: 2px;
+    }
+    .progress-graph-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.04em;
+    }
+    .progress-graph-count {
+      font-size: 0.65rem;
+      color: #b0bec8;
+    }
+    .progress-graph-divider {
+      width: 1px;
+      height: 70px;
+      background: #e8eef8;
+      flex-shrink: 0;
+      margin: 0 4px;
+    }
+    /* ── Progress task panel ── */
+    .progress-task-panel {
+      border-top: 1px solid #eef2f9;
+      padding-top: 10px;
+      margin-bottom: 12px;
+    }
+    .progress-panel-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .progress-panel-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 10px;
+      background: #b8ccec;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
     /* ── Footer ── */
     .cal-footer {
       text-align: center;
@@ -400,18 +467,23 @@
         <button class="view-toggle" id="viewToggle">年表示</button>
       </div>
       <div class="pie-row" id="pieRow">
-        <svg class="pie-svg" width="56" height="56" viewBox="0 0 56 56">
-          <circle cx="28" cy="28" r="22" fill="none" stroke="#eee" stroke-width="7"/>
-          <circle cx="28" cy="28" r="22" fill="none" stroke="#4a90e2" stroke-width="7"
-            stroke-dasharray="0 138.23" stroke-linecap="round"
-            transform="rotate(-90 28 28)" id="pieArc"/>
-        </svg>
-        <div class="pie-info">
-          <span class="pie-pct" id="piePct">—</span>
-          <span class="pie-sub">完全達成日の割合</span>
-          <span class="pie-detail" id="pieDetail"></span>
+        <div class="progress-graphs">
+          <div class="progress-graph-item" id="weekGraphItem">
+            <div id="weekGraphSvg"></div>
+            <div class="progress-graph-pct" id="weekGraphPct">—</div>
+            <div class="progress-graph-label">週次</div>
+            <div class="progress-graph-count" id="weekGraphCount">—</div>
+          </div>
+          <div class="progress-graph-divider"></div>
+          <div class="progress-graph-item" id="monthGraphItem">
+            <div id="monthGraphSvg"></div>
+            <div class="progress-graph-pct" id="monthGraphPct">—</div>
+            <div class="progress-graph-label">月次</div>
+            <div class="progress-graph-count" id="monthGraphCount">—</div>
+          </div>
         </div>
       </div>
+      <div class="progress-task-panel" id="progressTaskPanel" style="display:none"></div>
       <div id="calGrid"></div>
     </div>
 
@@ -540,6 +612,7 @@
 
   let currentYear, currentMonth, selectedDate;
   let calView = 'month';
+  let progressView = null; // null | 'week' | 'month'
 
   const WD_NAMES = ['日','月','火','水','木','金','土'];
 
@@ -636,6 +709,63 @@
     return { total, done };
   }
 
+  function getWeekStats(refDateKey) {
+    const ref = parseKey(refDateKey);
+    const sunday = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - ref.getDay());
+    const wk = toWeekKey(refDateKey);
+    let total = 0, done = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + i);
+      const key = toKey(d.getFullYear(), d.getMonth(), d.getDate());
+      (todos[key] || []).forEach(t => { total++; if (t.done) done++; });
+      recurring.filter(r => recurAppliesToDate(r, key)).forEach(r => {
+        total++;
+        if (r.doneByDate[key]) done++;
+      });
+    }
+    // Week-wide tasks: count once for the whole week
+    const sundayKey = toKey(sunday.getFullYear(), sunday.getMonth(), sunday.getDate());
+    recurring.filter(r => recurWeekApplies(r, sundayKey)).forEach(r => {
+      total++;
+      if ((r.doneByWeek || {})[wk]) done++;
+    });
+    return { total, done };
+  }
+
+  function getMonthStats(y, m) {
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    let total = 0, done = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = toKey(y, m, d);
+      (todos[key] || []).forEach(t => { total++; if (t.done) done++; });
+      recurring.filter(r => recurAppliesToDate(r, key)).forEach(r => {
+        total++;
+        if (r.doneByDate[key]) done++;
+      });
+    }
+    // Week-wide: count once per unique week in this month
+    const seenWeeks = new Set();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = toKey(y, m, d);
+      const wk = toWeekKey(key);
+      if (!seenWeeks.has(wk)) {
+        seenWeeks.add(wk);
+        recurring.filter(r => recurWeekApplies(r, key)).forEach(r => {
+          total++;
+          if ((r.doneByWeek || {})[wk]) done++;
+        });
+      }
+    }
+    // Month-wide: count once for the month
+    const firstKey = toKey(y, m, 1);
+    const monthKey = toMonthKey(firstKey);
+    recurring.filter(r => recurMonthApplies(r, firstKey)).forEach(r => {
+      total++;
+      if ((r.doneByMonth || {})[monthKey]) done++;
+    });
+    return { total, done };
+  }
+
   function calcPerfectDays(y, m) {
     const daysInMonth = new Date(y, m+1, 0).getDate();
     let daysWithTasks = 0, perfectDays = 0;
@@ -689,31 +819,140 @@
     if (calView === 'month') {
       document.getElementById('calTitle').textContent = `${currentYear}年 ${currentMonth+1}月`;
       renderMonthView();
-      renderPieSummary();
+      renderProgressGraphs();
     } else {
+      document.getElementById('progressTaskPanel').style.display = 'none';
       document.getElementById('calTitle').textContent = `${currentYear}年`;
       renderYearView();
     }
   }
 
-  function renderPieSummary() {
-    const { daysWithTasks, perfectDays } = calcPerfectDays(currentYear, currentMonth);
-    const arc   = document.getElementById('pieArc');
-    const pctEl = document.getElementById('piePct');
-    const detEl = document.getElementById('pieDetail');
-    const CIRC  = 2 * Math.PI * 22;
-    if (daysWithTasks === 0) {
-      arc.setAttribute('stroke-dasharray', `0 ${CIRC}`);
-      arc.setAttribute('stroke', '#eee');
-      pctEl.textContent = '—';
-      detEl.textContent = 'タスクのある日なし';
-      return;
+  function renderProgressGraphs() {
+    const refKey = selectedDate || toKey(currentYear, currentMonth, new Date().getDate());
+
+    // ── Weekly graph ──
+    const { total: wTotal, done: wDone } = getWeekStats(refKey);
+    const wPct   = wTotal > 0 ? Math.round(wDone / wTotal * 100) : null;
+    const wColor = wPct !== null ? statColor(wPct) : '#ccc';
+    const weekSvgEl = document.getElementById('weekGraphSvg');
+    weekSvgEl.innerHTML = '';
+    weekSvgEl.appendChild(makePieSvg(wPct ?? 0, wColor, 52, 20, 6));
+    const weekPctEl = document.getElementById('weekGraphPct');
+    weekPctEl.textContent = wPct !== null ? `${wPct}%` : '—';
+    weekPctEl.style.color = wColor;
+    document.getElementById('weekGraphCount').textContent =
+      wTotal > 0 ? `${wDone}/${wTotal} 完了` : 'タスクなし';
+
+    // ── Monthly graph ──
+    const { total: mTotal, done: mDone } = getMonthStats(currentYear, currentMonth);
+    const mPct   = mTotal > 0 ? Math.round(mDone / mTotal * 100) : null;
+    const mColor = mPct !== null ? statColor(mPct) : '#ccc';
+    const monthSvgEl = document.getElementById('monthGraphSvg');
+    monthSvgEl.innerHTML = '';
+    monthSvgEl.appendChild(makePieSvg(mPct ?? 0, mColor, 52, 20, 6));
+    const monthPctEl = document.getElementById('monthGraphPct');
+    monthPctEl.textContent = mPct !== null ? `${mPct}%` : '—';
+    monthPctEl.style.color = mColor;
+    document.getElementById('monthGraphCount').textContent =
+      mTotal > 0 ? `${mDone}/${mTotal} 完了` : 'タスクなし';
+
+    // ── Active state ──
+    document.getElementById('weekGraphItem').classList.toggle('pg-active', progressView === 'week');
+    document.getElementById('monthGraphItem').classList.toggle('pg-active', progressView === 'month');
+
+    renderProgressTaskPanel();
+  }
+
+  function renderProgressTaskPanel() {
+    const panel = document.getElementById('progressTaskPanel');
+    if (!progressView) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    panel.innerHTML = '';
+
+    const refKey   = selectedDate || toKey(currentYear, currentMonth, new Date().getDate());
+    const wk       = toWeekKey(refKey);
+    const monthKey = toMonthKey(toKey(currentYear, currentMonth, 1));
+
+    if (progressView === 'week') {
+      const ref     = parseKey(refKey);
+      const sunday  = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - ref.getDay());
+      const saturday = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + 6);
+      const title = document.createElement('div');
+      title.className = 'progress-panel-title';
+      title.textContent =
+        `${sunday.getMonth()+1}/${sunday.getDate()} 〜 ${saturday.getMonth()+1}/${saturday.getDate()}`;
+      panel.appendChild(title);
+
+      const weekRecur  = recurring.filter(r => recurWeekApplies(r, refKey));
+      const monthRecur = recurring.filter(r => recurMonthApplies(r, refKey));
+
+      if (weekRecur.length === 0 && monthRecur.length === 0) {
+        const e = document.createElement('div');
+        e.className = 'empty-msg';
+        e.textContent = 'この週に紐づくタスクはありません';
+        panel.appendChild(e);
+        return;
+      }
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      weekRecur.forEach(r => {
+        if (!r.doneByWeek) r.doneByWeek = {};
+        const done = r.doneByWeek[wk] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByWeek[wk] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+          renderTodos();
+        });
+        ul.appendChild(li);
+      });
+      monthRecur.forEach(r => {
+        if (!r.doneByMonth) r.doneByMonth = {};
+        const done = r.doneByMonth[monthKey] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByMonth[monthKey] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+          renderTodos();
+        });
+        ul.appendChild(li);
+      });
+      panel.appendChild(ul);
+
+    } else if (progressView === 'month') {
+      const title = document.createElement('div');
+      title.className = 'progress-panel-title';
+      title.textContent = `${currentYear}年${currentMonth+1}月 月次タスク`;
+      panel.appendChild(title);
+
+      const firstKey   = toKey(currentYear, currentMonth, 1);
+      const monthRecur = recurring.filter(r => recurMonthApplies(r, firstKey));
+
+      if (monthRecur.length === 0) {
+        const e = document.createElement('div');
+        e.className = 'empty-msg';
+        e.textContent = 'この月に紐づく月次タスクはありません';
+        panel.appendChild(e);
+        return;
+      }
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      monthRecur.forEach(r => {
+        if (!r.doneByMonth) r.doneByMonth = {};
+        const done = r.doneByMonth[monthKey] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByMonth[monthKey] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+          renderTodos();
+        });
+        ul.appendChild(li);
+      });
+      panel.appendChild(ul);
     }
-    const pct = Math.round(perfectDays / daysWithTasks * 100);
-    arc.setAttribute('stroke-dasharray', `${(pct/100)*CIRC} ${CIRC}`);
-    arc.setAttribute('stroke', statColor(pct));
-    pctEl.textContent = `${pct}%`;
-    detEl.textContent = `${perfectDays} / ${daysWithTasks}日 完全達成`;
   }
 
   const DAY_LABELS = ['日','月','火','水','木','金','土'];
@@ -835,11 +1074,13 @@
   document.getElementById('prevBtn').addEventListener('click', () => {
     if (calView === 'month') { if (--currentMonth < 0)  { currentMonth = 11; currentYear--; } }
     else currentYear--;
+    progressView = null;
     renderCalendar();
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
     if (calView === 'month') { if (++currentMonth > 11) { currentMonth = 0;  currentYear++; } }
     else currentYear++;
+    progressView = null;
     renderCalendar();
   });
   document.getElementById('viewToggle').addEventListener('click', () => {
@@ -1115,6 +1356,16 @@
     renderTodos();
     renderCalendar();
   }
+
+  // ── Progress graph tap handlers ──
+  document.getElementById('weekGraphItem').addEventListener('click', () => {
+    progressView = progressView === 'week' ? null : 'week';
+    renderProgressGraphs();
+  });
+  document.getElementById('monthGraphItem').addEventListener('click', () => {
+    progressView = progressView === 'month' ? null : 'month';
+    renderProgressGraphs();
+  });
 
   // ── Init ──
   loadData();
