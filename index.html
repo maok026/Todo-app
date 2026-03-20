@@ -679,6 +679,7 @@
   <nav class="bottom-nav">
     <button class="nav-item active" id="navHome">🏠 ホーム</button>
     <button class="nav-item" id="navAdd">➕ タスク追加</button>
+    <button class="nav-item" id="navInfo">ℹ️ Info</button>
   </nav>
 
 </div>
@@ -1518,6 +1519,7 @@
   // ── Nav / sheet close handlers ──
   document.getElementById('navHome').addEventListener('click', () => showPage('home'));
   document.getElementById('navAdd').addEventListener('click', () => showPage('add'));
+  document.getElementById('navInfo').addEventListener('click', () => { window.location.href = 'info.html'; });
   document.getElementById('sheetCloseBtn').addEventListener('click', closeSheet);
   document.getElementById('sheetOverlay').addEventListener('click', closeSheet);
 
