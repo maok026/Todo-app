@@ -419,6 +419,8 @@
     <div class="card">
       <div class="selected-date-label" id="selectedDateLabel">日付を選択してください</div>
       <div id="recurTaskSection"></div>
+      <div id="weekTaskSection"></div>
+      <div id="monthTaskSection"></div>
       <div id="onceTaskSection"></div>
     </div>
 
@@ -439,17 +441,25 @@
           </select>
         </div>
 
-        <!-- Weekly: day-of-week picker -->
+        <!-- Weekly: specific day or any day -->
         <div class="form-row" id="weekDaysRow" style="display:none">
-          <label class="row-label">曜日</label>
-          <div class="weekday-picker" id="weekDayPicker">
-            <button type="button" class="wd-btn" data-day="0">日</button>
-            <button type="button" class="wd-btn" data-day="1">月</button>
-            <button type="button" class="wd-btn" data-day="2">火</button>
-            <button type="button" class="wd-btn" data-day="3">水</button>
-            <button type="button" class="wd-btn" data-day="4">木</button>
-            <button type="button" class="wd-btn" data-day="5">金</button>
-            <button type="button" class="wd-btn" data-day="6">土</button>
+          <label class="row-label">設定</label>
+          <div class="monthly-type-group">
+            <label class="radio-row">
+              <input type="radio" name="weeklyType" value="specific" checked> 特定の曜日に行う
+            </label>
+            <div class="weekday-picker" id="weekDayPicker">
+              <button type="button" class="wd-btn" data-day="0">日</button>
+              <button type="button" class="wd-btn" data-day="1">月</button>
+              <button type="button" class="wd-btn" data-day="2">火</button>
+              <button type="button" class="wd-btn" data-day="3">水</button>
+              <button type="button" class="wd-btn" data-day="4">木</button>
+              <button type="button" class="wd-btn" data-day="5">金</button>
+              <button type="button" class="wd-btn" data-day="6">土</button>
+            </div>
+            <label class="radio-row">
+              <input type="radio" name="weeklyType" value="any"> 週のうちいつでもよい
+            </label>
           </div>
         </div>
 
@@ -480,6 +490,10 @@
             <label class="radio-row">
               <input type="radio" name="monthlyType" value="lastday">
               毎月末日
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="monthlyType" value="none">
+              月のうちいつでもよい
             </label>
           </div>
         </div>
@@ -548,6 +562,33 @@
   function lastDayOfMonth(date) {
     return new Date(date.getFullYear(), date.getMonth()+1, 0).getDate();
   }
+  function toWeekKey(dateKey) {
+    const d = parseKey(dateKey);
+    const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+    return toKey(sunday.getFullYear(), sunday.getMonth(), sunday.getDate());
+  }
+  function toMonthKey(dateKey) {
+    const parts = dateKey.split('-');
+    return `${parts[0]}-${parts[1]}`;
+  }
+  function recurWeekApplies(r, dateKey) {
+    if (r.type !== 'weekly' || !r.noSpecificDay) return false;
+    const d = parseKey(dateKey);
+    const s = parseKey(r.startDate);
+    if (d < s) return false;
+    if (r.endDate && d > parseKey(r.endDate)) return false;
+    return true;
+  }
+  function recurMonthApplies(r, dateKey) {
+    if (r.type !== 'monthly') return false;
+    const mc = r.monthlyConfig || {};
+    if (mc.mType !== 'none') return false;
+    const d = parseKey(dateKey);
+    const s = parseKey(r.startDate);
+    if (d < s) return false;
+    if (r.endDate && d > parseKey(r.endDate)) return false;
+    return true;
+  }
 
   function recurAppliesToDate(r, dateKey) {
     const d = parseKey(dateKey);
@@ -559,12 +600,14 @@
     if (r.type === 'daily') return true;
 
     if (r.type === 'weekly') {
+      if (r.noSpecificDay) return false;
       const days = r.weekDays || [s.getDay()];
       return days.includes(d.getDay());
     }
 
     if (r.type === 'monthly') {
       const mc = r.monthlyConfig || { mType: 'date', day: s.getDate() };
+      if (mc.mType === 'none')    return false;
       if (mc.mType === 'date')    return d.getDate() === mc.day;
       if (mc.mType === 'weekday') return d.getDay() === mc.weekDay && getNthWeekdayOfMonth(d) === mc.weekNum;
       if (mc.mType === 'lastday') return d.getDate() === lastDayOfMonth(d);
@@ -579,6 +622,16 @@
     recurring.filter(r => recurAppliesToDate(r, key)).forEach(r => {
       total++;
       if (r.doneByDate[key]) done++;
+    });
+    const weekKey = toWeekKey(key);
+    recurring.filter(r => recurWeekApplies(r, key)).forEach(r => {
+      total++;
+      if ((r.doneByWeek || {})[weekKey]) done++;
+    });
+    const monthKey = toMonthKey(key);
+    recurring.filter(r => recurMonthApplies(r, key)).forEach(r => {
+      total++;
+      if ((r.doneByMonth || {})[monthKey]) done++;
     });
     return { total, done };
   }
@@ -800,6 +853,12 @@
     document.getElementById('monthlyOptionsRow').style.display = this.value === 'monthly' ? '' : 'none';
   });
 
+  document.querySelectorAll('input[name="weeklyType"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('weekDayPicker').style.display = this.value === 'specific' ? '' : 'none';
+    });
+  });
+
   document.querySelectorAll('.wd-btn').forEach(btn => {
     btn.addEventListener('click', () => btn.classList.toggle('active'));
   });
@@ -825,11 +884,13 @@
   function scheduleLabel(r) {
     if (r.type === 'daily') return '毎日';
     if (r.type === 'weekly') {
+      if (r.noSpecificDay) return '毎週';
       const days = (r.weekDays || [parseKey(r.startDate).getDay()]).map(d => WD_NAMES[d]).join('・');
       return `毎週 ${days}`;
     }
     if (r.type === 'monthly') {
       const mc = r.monthlyConfig || { mType: 'date', day: parseKey(r.startDate).getDate() };
+      if (mc.mType === 'none')    return '毎月';
       if (mc.mType === 'date')    return `毎月 ${mc.day}日`;
       if (mc.mType === 'weekday') return `毎月 第${mc.weekNum}${WD_NAMES[mc.weekDay]}曜日`;
       if (mc.mType === 'lastday') return '毎月末日';
@@ -847,10 +908,16 @@
 
     let weekDays = null;
     let monthlyConfig = null;
+    let noSpecificDay = false;
 
     if (type === 'weekly') {
-      weekDays = Array.from(document.querySelectorAll('.wd-btn.active')).map(b => parseInt(b.dataset.day));
-      if (weekDays.length === 0) { alert('曜日を1つ以上選択してください'); return; }
+      const weeklyType = document.querySelector('input[name="weeklyType"]:checked').value;
+      if (weeklyType === 'specific') {
+        weekDays = Array.from(document.querySelectorAll('.wd-btn.active')).map(b => parseInt(b.dataset.day));
+        if (weekDays.length === 0) { alert('曜日を1つ以上選択してください'); return; }
+      } else {
+        noSpecificDay = true;
+      }
     }
     if (type === 'monthly') {
       const mType = document.querySelector('input[name="monthlyType"]:checked').value;
@@ -862,17 +929,21 @@
           weekNum: parseInt(document.getElementById('monthWeekNum').value),
           weekDay: parseInt(document.getElementById('monthWeekDay').value)
         };
-      } else {
+      } else if (mType === 'lastday') {
         monthlyConfig = { mType: 'lastday' };
+      } else {
+        monthlyConfig = { mType: 'none' };
       }
     }
 
-    recurring.push({ id: nextId++, text, type, startDate: start, endDate: end||null, weekDays, monthlyConfig, doneByDate: {} });
+    recurring.push({ id: nextId++, text, type, startDate: start, endDate: end||null, weekDays, monthlyConfig, noSpecificDay, doneByDate: {}, doneByWeek: {}, doneByMonth: {} });
     saveData();
     document.getElementById('recurText').value  = '';
     document.getElementById('recurStart').value = '';
     document.getElementById('recurEnd').value   = '';
     document.querySelectorAll('.wd-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('input[name="weeklyType"][value="specific"]').checked = true;
+    document.getElementById('weekDayPicker').style.display = '';
     document.querySelector('input[name="monthlyType"][value="date"]').checked = true;
 
     renderRecurringList();
@@ -915,44 +986,92 @@
     });
   }
 
+  function makeRecurLi(r, done, onChange) {
+    const li = document.createElement('li');
+    li.className = 'task-item' + (done ? ' done' : '');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox'; checkbox.checked = done;
+    checkbox.addEventListener('change', onChange);
+    const badge = document.createElement('span');
+    badge.className = `badge ${r.type}`;
+    badge.textContent = scheduleLabel(r);
+    const span = document.createElement('span');
+    span.className = 'task-text'; span.textContent = r.text;
+    li.appendChild(checkbox); li.appendChild(badge); li.appendChild(span);
+    return li;
+  }
+
   // ── Todo Panel ──
   function renderTodos() {
-    const label    = document.getElementById('selectedDateLabel');
-    const recurSec = document.getElementById('recurTaskSection');
-    const onceSec  = document.getElementById('onceTaskSection');
-    recurSec.innerHTML = '';
-    onceSec.innerHTML  = '';
+    const label     = document.getElementById('selectedDateLabel');
+    const recurSec  = document.getElementById('recurTaskSection');
+    const weekSec   = document.getElementById('weekTaskSection');
+    const monthSec  = document.getElementById('monthTaskSection');
+    const onceSec   = document.getElementById('onceTaskSection');
+    recurSec.innerHTML  = '';
+    weekSec.innerHTML   = '';
+    monthSec.innerHTML  = '';
+    onceSec.innerHTML   = '';
     if (!selectedDate) { label.textContent = '日付を選択してください'; return; }
     const [y,m,d] = selectedDate.split('-');
     label.textContent = `${y}年${parseInt(m)}月${parseInt(d)}日`;
 
+    // Day-specific recurring tasks
     const applicableRecur = recurring.filter(r => recurAppliesToDate(r, selectedDate));
     if (applicableRecur.length > 0) {
-      const sec = document.createElement('div');
       const ul = document.createElement('ul');
       ul.className = 'task-list';
       applicableRecur.forEach(r => {
         const done = r.doneByDate[selectedDate] || false;
-        const li   = document.createElement('li');
-        li.className = 'task-item' + (done ? ' done' : '');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox'; checkbox.checked = done;
-        checkbox.addEventListener('change', () => {
-          r.doneByDate[selectedDate] = checkbox.checked;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByDate[selectedDate] = e.target.checked;
           saveData();
-          li.classList.toggle('done', checkbox.checked);
+          li.classList.toggle('done', e.target.checked);
           renderCalendar();
         });
-        const badge = document.createElement('span');
-        badge.className = `badge ${r.type}`;
-        badge.textContent = scheduleLabel(r);
-        const span = document.createElement('span');
-        span.className = 'task-text'; span.textContent = r.text;
-        li.appendChild(checkbox); li.appendChild(badge); li.appendChild(span);
         ul.appendChild(li);
       });
-      sec.appendChild(ul);
-      recurSec.appendChild(sec);
+      recurSec.appendChild(ul);
+    }
+
+    // Week-wide recurring tasks
+    const weekKey = toWeekKey(selectedDate);
+    const applicableWeek = recurring.filter(r => recurWeekApplies(r, selectedDate));
+    if (applicableWeek.length > 0) {
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      applicableWeek.forEach(r => {
+        if (!r.doneByWeek) r.doneByWeek = {};
+        const done = r.doneByWeek[weekKey] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByWeek[weekKey] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      weekSec.appendChild(ul);
+    }
+
+    // Month-wide recurring tasks
+    const monthKey = toMonthKey(selectedDate);
+    const applicableMonth = recurring.filter(r => recurMonthApplies(r, selectedDate));
+    if (applicableMonth.length > 0) {
+      const ul = document.createElement('ul');
+      ul.className = 'task-list';
+      applicableMonth.forEach(r => {
+        if (!r.doneByMonth) r.doneByMonth = {};
+        const done = r.doneByMonth[monthKey] || false;
+        const li = makeRecurLi(r, done, (e) => {
+          r.doneByMonth[monthKey] = e.target.checked;
+          saveData();
+          li.classList.toggle('done', e.target.checked);
+          renderCalendar();
+        });
+        ul.appendChild(li);
+      });
+      monthSec.appendChild(ul);
     }
 
     const items = todos[selectedDate] || [];
