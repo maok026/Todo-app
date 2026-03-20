@@ -657,9 +657,11 @@
   function recurWeekApplies(r, dateKey) {
     if (r.type !== 'weekly' || !r.noSpecificDay) return false;
     const d = parseKey(dateKey);
+    const weekStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+    const weekEnd   = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
     const s = parseKey(r.startDate);
-    if (d < s) return false;
-    if (r.endDate && d > parseKey(r.endDate)) return false;
+    if (s > weekEnd) return false;
+    if (r.endDate && parseKey(r.endDate) < weekStart) return false;
     return true;
   }
   function recurMonthApplies(r, dateKey) {
@@ -667,9 +669,11 @@
     const mc = r.monthlyConfig || {};
     if (mc.mType !== 'none') return false;
     const d = parseKey(dateKey);
+    const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+    const monthEnd   = new Date(d.getFullYear(), d.getMonth() + 1, 0);
     const s = parseKey(r.startDate);
-    if (d < s) return false;
-    if (r.endDate && d > parseKey(r.endDate)) return false;
+    if (s > monthEnd) return false;
+    if (r.endDate && parseKey(r.endDate) < monthStart) return false;
     return true;
   }
 
