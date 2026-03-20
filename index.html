@@ -418,10 +418,6 @@
     <!-- Todo Panel -->
     <div class="card">
       <div class="selected-date-label" id="selectedDateLabel">日付を選択してください</div>
-      <div class="input-row">
-        <input type="text" id="todoInput" placeholder="この日だけのタスクを追加..." />
-        <button onclick="addTodo()">追加</button>
-      </div>
       <div id="recurTaskSection"></div>
       <div id="onceTaskSection"></div>
     </div>
@@ -933,9 +929,6 @@
     const applicableRecur = recurring.filter(r => recurAppliesToDate(r, selectedDate));
     if (applicableRecur.length > 0) {
       const sec = document.createElement('div');
-      const lbl = document.createElement('div');
-      lbl.className = 'section-label'; lbl.textContent = '繰り返しタスク';
-      sec.appendChild(lbl);
       const ul = document.createElement('ul');
       ul.className = 'task-list';
       applicableRecur.forEach(r => {
@@ -964,14 +957,7 @@
 
     const items = todos[selectedDate] || [];
     const sec2  = document.createElement('div');
-    const lbl2  = document.createElement('div');
-    lbl2.className = 'section-label'; lbl2.textContent = 'この日のタスク';
-    sec2.appendChild(lbl2);
-    if (items.length === 0) {
-      const msg = document.createElement('div');
-      msg.className = 'empty-msg'; msg.textContent = 'タスクはありません';
-      sec2.appendChild(msg);
-    } else {
+    if (items.length > 0) {
       const ul2 = document.createElement('ul');
       ul2.className = 'task-list';
       items.forEach((item, idx) => {
@@ -998,8 +984,6 @@
     onceSec.appendChild(sec2);
   }
 
-  const todoInput = document.getElementById('todoInput');
-  todoInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
   function addTodo() {
     if (!selectedDate) return;
     const text = todoInput.value.trim();
