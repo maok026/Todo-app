@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.todo_app_one_peach_53.twa",
+        "sha256_cert_fingerprints": ["0E:F2:D3:77:87:7D:CD:32:53:C0:80:0E:07:4A:C3:C6:D2:A8:0D:1F:5A:D0:AF:90:02:5D:48:A6:74:53:FF:5C"]
+      }
+    }]
