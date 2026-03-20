@@ -118,8 +118,25 @@
     /* ── Calendar grid ── */
     .cal-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, 1fr) 34px;
       gap: 3px;
+    }
+    .week-pie-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 2px 0;
+    }
+    .week-pie-cell:active { background: #eef2f9; }
+    .week-pie-cell.pg-active { background: #eef2f9; }
+    .week-pie-pct {
+      font-size: 0.48rem;
+      font-weight: 700;
+      line-height: 1;
     }
     .cal-day-label {
       text-align: center;
@@ -468,13 +485,6 @@
       </div>
       <div class="pie-row" id="pieRow">
         <div class="progress-graphs">
-          <div class="progress-graph-item" id="weekGraphItem">
-            <div id="weekGraphSvg"></div>
-            <div class="progress-graph-pct" id="weekGraphPct">—</div>
-            <div class="progress-graph-label">週次</div>
-            <div class="progress-graph-count" id="weekGraphCount">—</div>
-          </div>
-          <div class="progress-graph-divider"></div>
           <div class="progress-graph-item" id="monthGraphItem">
             <div id="monthGraphSvg"></div>
             <div class="progress-graph-pct" id="monthGraphPct">—</div>
@@ -612,7 +622,8 @@
 
   let currentYear, currentMonth, selectedDate;
   let calView = 'month';
-  let progressView = null; // null | 'week' | 'month'
+  let progressView = null;    // null | 'week' | 'month'
+  let progressWeekRef = null; // Sunday date key of the tapped week pie
 
   const WD_NAMES = ['日','月','火','水','木','金','土'];
 
@@ -828,21 +839,6 @@
   }
 
   function renderProgressGraphs() {
-    const refKey = selectedDate || toKey(currentYear, currentMonth, new Date().getDate());
-
-    // ── Weekly graph ──
-    const { total: wTotal, done: wDone } = getWeekStats(refKey);
-    const wPct   = wTotal > 0 ? Math.round(wDone / wTotal * 100) : null;
-    const wColor = wPct !== null ? statColor(wPct) : '#ccc';
-    const weekSvgEl = document.getElementById('weekGraphSvg');
-    weekSvgEl.innerHTML = '';
-    weekSvgEl.appendChild(makePieSvg(wPct ?? 0, wColor, 52, 20, 6));
-    const weekPctEl = document.getElementById('weekGraphPct');
-    weekPctEl.textContent = wPct !== null ? `${wPct}%` : '—';
-    weekPctEl.style.color = wColor;
-    document.getElementById('weekGraphCount').textContent =
-      wTotal > 0 ? `${wDone}/${wTotal} 完了` : 'タスクなし';
-
     // ── Monthly graph ──
     const { total: mTotal, done: mDone } = getMonthStats(currentYear, currentMonth);
     const mPct   = mTotal > 0 ? Math.round(mDone / mTotal * 100) : null;
@@ -857,7 +853,6 @@
       mTotal > 0 ? `${mDone}/${mTotal} 完了` : 'タスクなし';
 
     // ── Active state ──
-    document.getElementById('weekGraphItem').classList.toggle('pg-active', progressView === 'week');
     document.getElementById('monthGraphItem').classList.toggle('pg-active', progressView === 'month');
 
     renderProgressTaskPanel();
@@ -869,13 +864,10 @@
     panel.style.display = '';
     panel.innerHTML = '';
 
-    const refKey   = selectedDate || toKey(currentYear, currentMonth, new Date().getDate());
-    const wk       = toWeekKey(refKey);
-    const monthKey = toMonthKey(toKey(currentYear, currentMonth, 1));
-
     if (progressView === 'week') {
-      const ref     = parseKey(refKey);
-      const sunday  = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - ref.getDay());
+      const wk = progressWeekRef;
+      if (!wk) { panel.style.display = 'none'; return; }
+      const sunday   = parseKey(wk);
       const saturday = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + 6);
       const title = document.createElement('div');
       title.className = 'progress-panel-title';
@@ -883,8 +875,9 @@
         `${sunday.getMonth()+1}/${sunday.getDate()} 〜 ${saturday.getMonth()+1}/${saturday.getDate()}`;
       panel.appendChild(title);
 
-      const weekRecur  = recurring.filter(r => recurWeekApplies(r, refKey));
-      const monthRecur = recurring.filter(r => recurMonthApplies(r, refKey));
+      const weekRecur  = recurring.filter(r => recurWeekApplies(r, wk));
+      const monthRecur = recurring.filter(r => recurMonthApplies(r, wk));
+      const mKeyForWeek = toMonthKey(wk);
 
       if (weekRecur.length === 0 && monthRecur.length === 0) {
         const e = document.createElement('div');
@@ -909,9 +902,9 @@
       });
       monthRecur.forEach(r => {
         if (!r.doneByMonth) r.doneByMonth = {};
-        const done = r.doneByMonth[monthKey] || false;
+        const done = r.doneByMonth[mKeyForWeek] || false;
         const li = makeRecurLi(r, done, (e) => {
-          r.doneByMonth[monthKey] = e.target.checked;
+          r.doneByMonth[mKeyForWeek] = e.target.checked;
           saveData();
           li.classList.toggle('done', e.target.checked);
           renderCalendar();
@@ -922,6 +915,7 @@
       panel.appendChild(ul);
 
     } else if (progressView === 'month') {
+      const displayedMonthKey = toMonthKey(toKey(currentYear, currentMonth, 1));
       const title = document.createElement('div');
       title.className = 'progress-panel-title';
       title.textContent = `${currentYear}年${currentMonth+1}月 月次タスク`;
@@ -941,9 +935,9 @@
       ul.className = 'task-list';
       monthRecur.forEach(r => {
         if (!r.doneByMonth) r.doneByMonth = {};
-        const done = r.doneByMonth[monthKey] || false;
+        const done = r.doneByMonth[displayedMonthKey] || false;
         const li = makeRecurLi(r, done, (e) => {
-          r.doneByMonth[monthKey] = e.target.checked;
+          r.doneByMonth[displayedMonthKey] = e.target.checked;
           saveData();
           li.classList.toggle('done', e.target.checked);
           renderCalendar();
@@ -961,20 +955,57 @@
     const grid = document.getElementById('calGrid');
     grid.className = 'cal-grid';
     grid.innerHTML = '';
+
+    // Header row: 7 day labels + empty header for week-pie column
     DAY_LABELS.forEach(d => {
       const el = document.createElement('div');
       el.className = 'cal-day-label';
       el.textContent = d;
       grid.appendChild(el);
     });
+    grid.appendChild(document.createElement('div')); // 8th header cell
+
     const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
     const today       = new Date();
+
+    // Adds a week-pie cell for the week containing refKey
+    const addWeekPie = (refKey) => {
+      const wk = toWeekKey(refKey);
+      const { total, done } = getWeekStats(refKey);
+      const pct   = total > 0 ? Math.round(done / total * 100) : null;
+      const color = pct !== null ? statColor(pct) : '#ccc';
+      const isActive = progressView === 'week' && progressWeekRef === wk;
+      const cell = document.createElement('div');
+      cell.className = 'week-pie-cell' + (isActive ? ' pg-active' : '');
+      cell.appendChild(makePieSvg(pct ?? 0, pct !== null ? color : '#e0e0e0', 28, 10, 3));
+      if (pct !== null) {
+        const lbl = document.createElement('div');
+        lbl.className = 'week-pie-pct';
+        lbl.textContent = `${pct}%`;
+        lbl.style.color = color;
+        cell.appendChild(lbl);
+      }
+      cell.addEventListener('click', () => {
+        if (progressView === 'week' && progressWeekRef === wk) {
+          progressView = null;
+          progressWeekRef = null;
+        } else {
+          progressView = 'week';
+          progressWeekRef = wk;
+        }
+        renderCalendar();
+      });
+      grid.appendChild(cell);
+    };
+
+    // Empty cells before month start
     for (let i = 0; i < firstDay; i++) {
       const el = document.createElement('div');
       el.className = 'cal-day empty';
       grid.appendChild(el);
     }
+
     for (let d = 1; d <= daysInMonth; d++) {
       const key = toKey(currentYear, currentMonth, d);
       const el  = document.createElement('div');
@@ -1002,6 +1033,20 @@
       }
       el.addEventListener('click', () => selectDate(key));
       grid.appendChild(el);
+
+      const dayPos = (firstDay + d - 1) % 7;
+      if (dayPos === 6) {
+        // End of row (Saturday) — add week pie
+        addWeekPie(key);
+      } else if (d === daysInMonth) {
+        // Last day: fill remaining day cells then add week pie
+        for (let j = dayPos + 1; j < 7; j++) {
+          const empty = document.createElement('div');
+          empty.className = 'cal-day empty';
+          grid.appendChild(empty);
+        }
+        addWeekPie(key);
+      }
     }
   }
 
@@ -1074,13 +1119,13 @@
   document.getElementById('prevBtn').addEventListener('click', () => {
     if (calView === 'month') { if (--currentMonth < 0)  { currentMonth = 11; currentYear--; } }
     else currentYear--;
-    progressView = null;
+    progressView = null; progressWeekRef = null;
     renderCalendar();
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
     if (calView === 'month') { if (++currentMonth > 11) { currentMonth = 0;  currentYear++; } }
     else currentYear++;
-    progressView = null;
+    progressView = null; progressWeekRef = null;
     renderCalendar();
   });
   document.getElementById('viewToggle').addEventListener('click', () => {
@@ -1358,13 +1403,10 @@
   }
 
   // ── Progress graph tap handlers ──
-  document.getElementById('weekGraphItem').addEventListener('click', () => {
-    progressView = progressView === 'week' ? null : 'week';
-    renderProgressGraphs();
-  });
   document.getElementById('monthGraphItem').addEventListener('click', () => {
     progressView = progressView === 'month' ? null : 'month';
-    renderProgressGraphs();
+    if (progressView === 'month') progressWeekRef = null;
+    renderCalendar();
   });
 
   // ── Init ──
