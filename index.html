@@ -507,7 +507,7 @@
 
     <!-- Recurring Task Manager -->
     <div class="card">
-      <h2>繰り返しタスク</h2>
+      <h2>タスクの追加</h2>
       <div class="form-grid">
         <div class="form-row">
           <label class="row-label">タスク名</label>
@@ -848,7 +848,7 @@
     monthPctEl.textContent = mPct !== null ? `${mPct}%` : '—';
     monthPctEl.style.color = mColor;
     document.getElementById('monthGraphCount').textContent =
-      mTotal > 0 ? `${mDone}/${mTotal} 完了` : 'タスクなし';
+      mTotal > 0 ? `${mDone}/${mTotal}件 完了` : 'タスクなし';
 
     // ── Active state ──
     document.getElementById('monthGraphItem').classList.toggle('pg-active', progressView === 'month');
@@ -1285,7 +1285,7 @@
     // ── 日付選択モード ──
     if (!selectedDate) { label.textContent = '日付を選択してください'; return; }
     const [y,m,d] = selectedDate.split('-');
-    label.textContent = `${y}年${parseInt(m)}月${parseInt(d)}日`;
+    label.textContent = `${y}年${parseInt(m)}月${parseInt(d)}日のタスク`;
 
     // Day-specific recurring tasks
     const applicableRecur = recurring.filter(r => recurAppliesToDate(r, selectedDate));
