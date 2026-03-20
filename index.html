@@ -962,22 +962,26 @@
     grid.innerHTML = '';
 
     // ── Year summary ──
-    const { daysWithTasks, perfectDays } = calcYearStats(currentYear);
+    let yearTotal = 0, yearDone = 0;
+    for (let m = 0; m < 12; m++) {
+      const { total, done } = getMonthStats(currentYear, m);
+      yearTotal += total; yearDone += done;
+    }
     const yearSummary = document.createElement('div');
     yearSummary.className = 'year-summary';
-    if (daysWithTasks === 0) {
+    if (yearTotal === 0) {
       yearSummary.innerHTML = `
         <div style="color:#ccc;font-size:.85rem;">この年にタスクのある日はありません</div>`;
     } else {
-      const pct   = Math.round(perfectDays / daysWithTasks * 100);
+      const pct   = Math.round(yearDone / yearTotal * 100);
       const color = statColor(pct);
       yearSummary.appendChild(makePieSvg(pct, color, 56, 22, 7));
       const info = document.createElement('div');
       info.className = 'pie-info';
       info.innerHTML = `
         <span class="pie-pct" style="color:${color}">${pct}%</span>
-        <span class="pie-sub">${currentYear}年 年間完全達成率</span>
-        <span class="pie-detail">${perfectDays} / ${daysWithTasks}日 完全達成</span>`;
+        <span class="pie-sub">${currentYear}年 年間完了率</span>
+        <span class="pie-detail">${yearDone} / ${yearTotal}件 完了</span>`;
       yearSummary.appendChild(info);
     }
     grid.appendChild(yearSummary);
@@ -987,9 +991,9 @@
     monthGrid.className = 'year-month-grid';
     const today = new Date();
     for (let m = 0; m < 12; m++) {
-      const { daysWithTasks: dwt, perfectDays: pd } = calcPerfectDays(currentYear, m);
-      const hasTasks = dwt > 0;
-      const pct      = hasTasks ? Math.round(pd/dwt*100) : null;
+      const { total: mTotal, done: mDone } = getMonthStats(currentYear, m);
+      const hasTasks = mTotal > 0;
+      const pct      = hasTasks ? Math.round(mDone/mTotal*100) : null;
       const color    = pct !== null ? statColor(pct) : '#ccc';
       const card = document.createElement('div');
       card.className = 'month-card';
@@ -1005,7 +1009,7 @@
       pctEl.textContent = pct !== null ? `${pct}%` : '—';
       const det = document.createElement('div');
       det.className = 'month-card-detail';
-      det.textContent = hasTasks ? `${pd}/${dwt}日` : 'タスクなし';
+      det.textContent = hasTasks ? `${mDone}/${mTotal}件` : 'タスクなし';
       card.appendChild(pctEl);
       card.appendChild(det);
       card.addEventListener('click', () => {
